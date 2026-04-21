@@ -1226,6 +1226,7 @@ function renderCards() {
           <div class="card-sub">還款帳戶：${acc ? acc.bank+' — '+acc.name : '未連結'}</div>
         </div>
         <div style="display:flex;gap:8px;">
+          <button class="badge" onclick="rolloverCard('${card.id}')" title="下期變本期，本期清空">↻ 結帳換期</button>
           <button class="badge" onclick="editCard('${card.id}')">編輯</button>
           <button class="badge danger" onclick="deleteItem(()=>{deleteCard('${card.id}')})">刪除</button>
         </div>
@@ -1239,6 +1240,21 @@ function renderCards() {
 }
 
 function switchCard(i) { currentCardIdx = i; renderCards(); }
+
+function rolloverCard(cardId) {
+  if (!confirm('結帳換期：下期項目將變成本期，本期項目將清空，帳單日期也會互換。確定嗎？')) return;
+  const card = state.cards.find(c => c.id === cardId);
+  if (!card) return;
+  // Move next -> current, clear next
+  card.currentItems = JSON.parse(JSON.stringify(card.nextItems||[]));
+  card.nextItems = [];
+  // Swap dates
+  const tmpDate = card.currentDate||'';
+  card.currentDate = card.nextDate||'';
+  card.nextDate = '';
+  persist();
+  renderCards();
+}
 
 function openAddCCItem(cardId, period) {
   document.getElementById('cc-item-card-id').value = cardId;
