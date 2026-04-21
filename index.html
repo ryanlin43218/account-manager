@@ -638,14 +638,7 @@ async function loadFromDrive() {
 
     if (localHasData && driveHasData) {
       // Both have data - ask user which to use
-      const useLocal = confirm(
-        '本機與 Google Drive 都有資料。
-
-' +
-        '按「確定」→ 使用本機資料（並上傳到 Drive 覆蓋）
-' +
-        '按「取消」→ 使用 Drive 資料（本機資料會被取代）'
-      );
+      const useLocal = confirm('本機與 Google Drive 都有資料。\n\n按「確定」→ 使用本機資料（並上傳到 Drive 覆蓋）\n按「取消」→ 使用 Drive 資料（本機資料會被取代）');
       if (useLocal) {
         // Keep local, push to drive
         state = localData;
