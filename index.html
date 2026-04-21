@@ -1646,8 +1646,7 @@ function restoreSnapshot(id) {
   state = restoredState;
   persist();
   renderAll();
-  alert('✅ 已還原到：' + snap.time + '
-目前狀態已備份為新快照。');
+  alert('✅ 已還原到：' + snap.time + '\n目前狀態已備份為新快照。');
 }
 
 function exportSnapshot(id) {
