@@ -198,8 +198,60 @@ textarea { resize: vertical; min-height: 60px; }
 .mt-16 { margin-top: 16px; }
 .text-sm { font-size: 12px; color: var(--text3); }
 .mono { font-family: var(--mono); }
-.sub-items-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.sub-items-title { font-size: 12px; font-weight: 600; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; }
+.sub-items-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.sub-items-title { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.6px; text-transform: uppercase; }
+
+/* Two-column account layout */
+.account-layout { display: grid; grid-template-columns: 1fr 300px; gap: 14px; align-items: start; }
+@media (max-width: 700px) { .account-layout { grid-template-columns: 1fr; } }
+
+/* Compact rows */
+.row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; gap: 8px; }
+.row:last-child { border-bottom: none; padding-bottom: 0; }
+
+/* Drag handle */
+.drag-handle { cursor: grab; color: var(--text3); font-size: 14px; padding: 0 4px; user-select: none; flex-shrink: 0; }
+.drag-handle:active { cursor: grabbing; }
+.subitem-row { display: flex; align-items: flex-start; gap: 4px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.subitem-row:last-child { border-bottom: none; }
+.subitem-row.dragging { opacity: 0.4; background: var(--accent-light); border-radius: 6px; }
+.subitem-row.drag-over { border-top: 2px solid var(--accent); }
+
+/* Subitem content */
+.subitem-main { flex: 1; min-width: 0; }
+.subitem-header { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.subitem-name { font-size: 13px; font-weight: 500; }
+.subitem-amount { font-family: var(--mono); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.subitem-amount.pos { color: var(--accent); }
+.subitem-amount.neg { color: var(--danger); }
+.subitem-amount.neutral { color: var(--text3); }
+.subitem-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* Accumulate entries - compact */
+.accu-entries { margin-top: 4px; }
+.accu-entry { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 6px; border-radius: 5px; background: var(--surface2); margin-bottom: 3px; }
+.accu-entry-date { color: var(--text3); font-family: var(--mono); white-space: nowrap; flex-shrink: 0; }
+.accu-entry-name { flex: 1; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.accu-entry-note { color: var(--text3); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+.accu-entry-amount { font-family: var(--mono); font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+.accu-toggle { cursor: pointer; font-size: 11px; color: var(--text3); padding: 2px 0; background: none; border: none; font-family: var(--sans); }
+.accu-toggle:hover { color: var(--accent); }
+
+/* Calc panel (right column) */
+.calc-panel { background: var(--surface); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); position: sticky; top: 20px; }
+.calc-panel-title { font-size: 12px; font-weight: 600; color: var(--text3); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 10px; }
+.calc-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
+.calc-row:last-of-type { border-bottom: none; }
+.calc-row input[type=checkbox] { flex-shrink: 0; }
+.calc-row-name { flex: 1; color: var(--text2); }
+.calc-row-amount { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+.calc-row-amount.pos { color: var(--accent); }
+.calc-row-amount.neg { color: var(--danger); }
+.calc-divider { height: 1px; background: var(--border2); margin: 8px 0; }
+.calc-balance { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); padding: 2px 0; }
+.calc-result-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; }
+.calc-result-label { font-size: 13px; font-weight: 600; }
+.calc-result-val { font-family: var(--mono); font-size: 20px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -338,7 +390,15 @@ textarea { resize: vertical; min-height: 60px; }
         <option value="accum">累計記錄型</option>
       </select>
     </div>
-    <div id="sub-fixed-section" class="form-row"><div class="form-label">金額</div><input type="number" id="sub-amount" placeholder="0"></div>
+    <div class="form-row">
+      <div class="form-label">計算方向（用於可用金額計算）</div>
+      <select id="sub-sign">
+        <option value="-1">扣除（佔用這筆錢）</option>
+        <option value="1">加入（這筆錢可以用）</option>
+        <option value="0">不計算</option>
+      </select>
+    </div>
+    <div id="sub-fixed-section" class="form-row"><div class="form-label">金額（累計型請填 0，由記錄加總）</div><input type="number" id="sub-amount" placeholder="0"></div>
     <div class="form-row"><div class="form-label">備註</div><textarea id="sub-note" placeholder="可選"></textarea></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-add-subitem')">取消</button>
@@ -647,6 +707,35 @@ function renderOverview() {
 }
 
 // ─── Accounts ────────────────────────────────────────────────────
+let expandedSubitems = {};
+
+function getSubVal(s) {
+  return s.type === 'fixed' ? Number(s.amount||0) : (s.entries||[]).reduce((x,e)=>x+Number(e.amount||0),0);
+}
+
+function getSignLabel(sign) {
+  if (sign === 1 || sign === '1') return '<span class="tag" style="color:var(--accent)">＋加入</span>';
+  if (sign === -1 || sign === '-1') return '<span class="tag" style="color:var(--danger)">－扣除</span>';
+  return '<span class="tag">不計算</span>';
+}
+
+function calcAvailable(acc) {
+  const ccLinked = state.cards.filter(c => c.accountId === acc.id);
+  let total = Number(acc.balance||0);
+  (acc.subitems||[]).forEach(s => {
+    if (s.calcChecked === false) return;
+    const sign = Number(s.sign||'-1');
+    if (sign === 0) return;
+    const val = getSubVal(s);
+    total += sign * val;
+  });
+  ccLinked.forEach(c => {
+    if ((acc.ccCalcChecked||{})[c.id] === false) return;
+    total -= getCCTotal(c,'current');
+  });
+  return total;
+}
+
 function renderAccounts() {
   const tabsEl = document.getElementById('account-tabs');
   const contentEl = document.getElementById('account-content');
@@ -660,7 +749,7 @@ function renderAccounts() {
 
   tabsEl.innerHTML = state.accounts.map((a, i) => `
     <div class="tab ${i === currentAccountIdx ? 'active' : ''}" onclick="switchAccount(${i})">${a.bank}</div>
-  `).join('') + `<div class="tab add" onclick="openModal('modal-add-account')">＋ 新增</div>`;
+  `).join('') + `<div class="tab add" onclick="openAddAccountModal()">＋ 新增</div>`;
 
   const acc = state.accounts[currentAccountIdx];
   const ccLinked = state.cards.filter(c => c.accountId === acc.id);
@@ -668,130 +757,171 @@ function renderAccounts() {
   // Build sub-items HTML
   let subHtml = '';
   if (!acc.subitems || !acc.subitems.length) {
-    subHtml = '<div class="empty" style="padding:20px 0;">尚無子項目</div>';
+    subHtml = '<div class="empty" style="padding:12px 0;font-size:13px;">尚無子項目</div>';
   } else {
-    subHtml = acc.subitems.map(s => {
-      if (s.type === 'fixed') {
-        return `<div class="row">
-          <span class="row-label">${s.name} <span class="tag">固定</span>${s.note ? ` <span class="text-sm">${s.note}</span>` : ''}</span>
-          <span style="display:flex;align-items:center;gap:8px;">
-            <span class="row-value mono">$${fmt(s.amount)}</span>
-            <button class="btn sm" onclick="editSubItem('${acc.id}','${s.id}')">編輯</button>
-            <button class="btn sm danger" onclick="deleteItem(()=>{deleteSubItem('${acc.id}','${s.id}')})">刪除</button>
-          </span>
-        </div>`;
-      } else {
-        const total = (s.entries||[]).reduce((x,e)=>x+Number(e.amount||0),0);
-        const entriesHtml = (s.entries||[]).map(e => `
-          <div class="accu-entry">
-            <span class="accu-entry-date">${e.date}</span>
-            <span class="accu-entry-name">${e.name}</span>
-            ${e.note ? `<span class="accu-entry-note">${e.note}</span>` : ''}
-            <span class="accu-entry-amount">$${fmt(e.amount)}</span>
-            <button class="btn sm" onclick="editAccuEntry('${acc.id}','${s.id}','${e.id}')">編輯</button>
-            <button class="btn sm danger" onclick="deleteItem(()=>{deleteAccuEntry('${acc.id}','${s.id}','${e.id}')})">✕</button>
-          </div>`).join('');
-        return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <span class="row-label">${s.name} <span class="tag">累計</span>${s.note ? ` <span class="text-sm">${s.note}</span>` : ''}</span>
-            <span style="display:flex;align-items:center;gap:8px;">
-              <span class="row-value mono">$${fmt(total)}</span>
-              <button class="btn sm" onclick="openAddAccuEntry('${acc.id}','${s.id}')">＋ 新增記錄</button>
-              <button class="btn sm" onclick="editSubItem('${acc.id}','${s.id}')">編輯</button>
-              <button class="btn sm danger" onclick="deleteItem(()=>{deleteSubItem('${acc.id}','${s.id}')})">刪除</button>
-            </span>
-          </div>
-          <div class="accu-entries">${entriesHtml || '<div class="text-sm" style="padding:4px 0;">尚無記錄</div>'}</div>
-        </div>`;
+    subHtml = acc.subitems.map((s, idx) => {
+      const val = getSubVal(s);
+      const sign = Number(s.sign||'-1');
+      const amtClass = sign === 0 ? 'neutral' : (sign > 0 ? 'pos' : 'neg');
+      const amtPrefix = sign > 0 ? '+' : '';
+      const isExpanded = expandedSubitems[s.id] !== false; // default expanded? No — default collapsed for accum
+      const defaultExpanded = s.type !== 'accum';
+      const expanded = expandedSubitems[s.id] === true ? true : (expandedSubitems[s.id] === false ? false : defaultExpanded);
+
+      let entriesHtml = '';
+      if (s.type === 'accum') {
+        const entries = (s.entries||[]);
+        entriesHtml = `
+          <button class="accu-toggle" onclick="toggleAccuExpand('${s.id}')">${expanded ? '▾ 收合明細' : '▸ 展開明細'} (${entries.length} 筆)</button>
+          ${expanded ? `<div class="accu-entries" id="accu-entries-${s.id}">
+            ${entries.length ? entries.map(e => `
+              <div class="accu-entry">
+                <span class="accu-entry-date">${e.date}</span>
+                <span class="accu-entry-name">${e.name}</span>
+                ${e.note ? `<span class="accu-entry-note">${e.note}</span>` : ''}
+                <span class="accu-entry-amount">${Number(e.amount)<0?'':'+'}$${fmt(e.amount)}</span>
+                <button class="btn sm" style="padding:1px 6px;font-size:10px;" onclick="editAccuEntry('${acc.id}','${s.id}','${e.id}')">編輯</button>
+                <button class="btn sm danger" style="padding:1px 6px;font-size:10px;" onclick="deleteItem(()=>{deleteAccuEntry('${acc.id}','${s.id}','${e.id}')})">✕</button>
+              </div>`).join('') : '<div class="text-sm" style="padding:3px 0;">尚無記錄</div>'}
+          </div>` : ''}`;
       }
+
+      return `<div class="subitem-row" draggable="true"
+          ondragstart="dragStart(event,${idx},'${acc.id}')"
+          ondragover="dragOver(event,${idx},'${acc.id}')"
+          ondrop="dragDrop(event,${idx},'${acc.id}')"
+          ondragleave="dragLeave(event)"
+          id="subitem-row-${s.id}">
+        <span class="drag-handle">⠿</span>
+        <div class="subitem-main">
+          <div class="subitem-header">
+            <span class="subitem-name">${s.name}</span>
+            <span class="tag">${s.type === 'fixed' ? '固定' : '累計'}</span>
+            ${getSignLabel(s.sign||'-1')}
+            ${s.note ? `<span class="text-sm">${s.note}</span>` : ''}
+          </div>
+          ${entriesHtml}
+        </div>
+        <span class="subitem-amount ${amtClass}" style="margin: 0 6px;">${amtPrefix}$${fmt(val)}</span>
+        <div class="subitem-actions">
+          ${s.type === 'accum' ? `<button class="btn sm" onclick="openAddAccuEntry('${acc.id}','${s.id}')">＋</button>` : ''}
+          <button class="btn sm" onclick="editSubItem('${acc.id}','${s.id}')">編輯</button>
+          <button class="btn sm danger" onclick="deleteItem(()=>{deleteSubItem('${acc.id}','${s.id}')})">刪除</button>
+        </div>
+      </div>`;
     }).join('');
   }
 
   // Linked CC rows
   const ccRows = ccLinked.map(c => `
-    <div class="row">
-      <span class="row-label">${c.name} <span class="tag">信用卡</span></span>
-      <span class="row-value red mono">$${fmt(getCCTotal(c,'current'))}</span>
+    <div class="subitem-row">
+      <span class="drag-handle" style="opacity:0;pointer-events:none;">⠿</span>
+      <div class="subitem-main">
+        <div class="subitem-header">
+          <span class="subitem-name">${c.name}</span>
+          <span class="tag">信用卡本期</span>
+        </div>
+      </div>
+      <span class="subitem-amount neg" style="margin: 0 6px;">-$${fmt(getCCTotal(c,'current'))}</span>
+      <div class="subitem-actions" style="width:60px;"></div>
     </div>`).join('');
 
-  // Calc box
-  let calcItems = (acc.subitems||[]).map(s => {
-    const val = s.type === 'fixed' ? Number(s.amount||0) : (s.entries||[]).reduce((x,e)=>x+Number(e.amount||0),0);
-    const checked = s.calcChecked !== false ? 'checked' : '';
-    return { id: s.id, name: s.name, val, checked };
-  });
-  ccLinked.forEach(c => {
+  // Calc panel
+  const avail = calcAvailable(acc);
+  const calcRows = (acc.subitems||[]).map(s => {
+    const sign = Number(s.sign||'-1');
+    const val = getSubVal(s);
+    const effVal = sign * val;
+    const checked = s.calcChecked !== false;
+    const amtClass = effVal >= 0 ? 'pos' : 'neg';
+    const amtStr = (effVal >= 0 ? '+' : '') + '$' + fmt(effVal);
+    return `<div class="calc-row">
+      <input type="checkbox" ${checked ? 'checked' : ''} onchange="updateCalc('${acc.id}','${s.id}',this.checked)">
+      <span class="calc-row-name">${s.name}</span>
+      <span class="calc-row-amount ${amtClass}">${amtStr}</span>
+    </div>`;
+  }).join('');
+
+  const ccCalcRows = ccLinked.map(c => {
     const val = getCCTotal(c,'current');
-    const checked = (acc.ccCalcChecked||{})[c.id] !== false ? 'checked' : '';
-    calcItems.push({ id: 'cc_'+c.id, name: c.name+' 本期', val, checked });
-  });
-
-  const calcHtml = calcItems.map(it => `
-    <div class="calc-row">
-      <input type="checkbox" ${it.checked} onchange="updateCalc('${acc.id}','${it.id}',this.checked)">
-      <span style="flex:1">${it.name}</span>
-      <span class="mono">$${fmt(it.val)}</span>
-    </div>`).join('');
-
-  function calcResult() {
-    let deduct = 0;
-    calcItems.forEach(it => {
-      const el = document.querySelector(`[data-calc="${acc.id}-${it.id}"]`);
-      const checked = el ? el.checked : it.checked === 'checked';
-      if (checked) deduct += it.val;
-    });
-    return Number(acc.balance||0) - deduct;
-  }
+    const checked = (acc.ccCalcChecked||{})[c.id] !== false;
+    return `<div class="calc-row">
+      <input type="checkbox" ${checked ? 'checked' : ''} onchange="updateCalc('${acc.id}','cc_${c.id}',this.checked)">
+      <span class="calc-row-name">${c.name} 本期</span>
+      <span class="calc-row-amount neg">-$${fmt(val)}</span>
+    </div>`;
+  }).join('');
 
   contentEl.innerHTML = `
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">${acc.bank} — ${acc.name}</div>
-          <div class="card-sub">目前餘額 <span class="mono">$${fmt(acc.balance)}</span></div>
+    <div class="account-layout">
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-header" style="margin-bottom:10px;">
+          <div>
+            <div class="card-title">${acc.bank} — ${acc.name}</div>
+            <div class="card-sub">餘額 <span class="mono">$${fmt(acc.balance)}</span>${acc.note ? ` · ${acc.note}` : ''}</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="badge" onclick="editAccount('${acc.id}')">編輯</button>
+            <button class="badge danger" onclick="deleteItem(()=>{deleteAccount('${acc.id}')})">刪除</button>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;">
-          <button class="badge" onclick="editAccount('${acc.id}')">編輯帳戶</button>
-          <button class="badge danger" onclick="deleteItem(()=>{deleteAccount('${acc.id}')})">刪除</button>
+        <div class="sub-items-header">
+          <div class="sub-items-title">子項目</div>
+          <button class="btn sm" onclick="openAddSubItem('${acc.id}')">＋ 新增</button>
+        </div>
+        <div id="subitems-list-${acc.id}">
+          ${subHtml}
+          ${ccRows}
         </div>
       </div>
-      ${acc.note ? `<div class="text-sm" style="margin-bottom:12px;">${acc.note}</div>` : ''}
-      <div class="sub-items-header">
-        <div class="sub-items-title">子項目</div>
-        <button class="btn sm" onclick="openAddSubItem('${acc.id}')">＋ 新增子項目</button>
-      </div>
-      ${subHtml}
-      ${ccRows}
-    </div>
-    <div class="card">
-      <div class="card-title" style="margin-bottom:12px;">可用金額計算</div>
-      <div class="calc-box">
-        ${calcHtml || '<div class="text-sm">尚無子項目可計算</div>'}
-        ${calcItems.length ? `<div class="calc-result"><span>可用金額</span><span class="calc-result-val" id="calc-result-${acc.id}">$${fmt(Number(acc.balance||0))}</span></div>` : ''}
+      <div class="calc-panel">
+        <div class="calc-panel-title">可用金額計算</div>
+        <div class="calc-balance"><span>帳戶餘額</span><span class="mono">$${fmt(acc.balance)}</span></div>
+        <div class="calc-divider"></div>
+        ${calcRows}${ccCalcRows}
+        <div class="calc-divider"></div>
+        <div class="calc-result-row">
+          <span class="calc-result-label">可用</span>
+          <span class="calc-result-val" id="calc-result-${acc.id}" style="color:${avail<0?'var(--danger)':'var(--accent)'}">$${fmt(avail)}</span>
+        </div>
       </div>
     </div>
   `;
-  updateCalcDisplay(acc.id);
+}
+
+function toggleAccuExpand(subId) {
+  const cur = expandedSubitems[subId];
+  // default for accum is collapsed (false), toggle to opposite
+  expandedSubitems[subId] = cur === true ? false : true;
+  const accId = state.accounts[currentAccountIdx]?.id;
+  if (accId) renderAccounts();
+}
+
+// Drag and drop
+let dragSrcIdx = null;
+function dragStart(e, idx, accId) { dragSrcIdx = idx; e.currentTarget.classList.add('dragging'); }
+function dragOver(e, idx, accId) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function dragDrop(e, targetIdx, accId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+  const acc = state.accounts.find(a => a.id === accId);
+  if (!acc || !acc.subitems) return;
+  const items = acc.subitems;
+  const [moved] = items.splice(dragSrcIdx, 1);
+  items.splice(targetIdx, 0, moved);
+  dragSrcIdx = null;
+  persist();
+  renderAccounts();
 }
 
 function updateCalcDisplay(accId) {
   const acc = state.accounts.find(a => a.id === accId);
   if (!acc) return;
-  const ccLinked = state.cards.filter(c => c.accountId === accId);
-  let total = Number(acc.balance||0);
-  (acc.subitems||[]).forEach(s => {
-    const cb = document.querySelector(`input[onchange*="'${accId}','${s.id}'"]`);
-    if (cb && cb.checked) {
-      const val = s.type === 'fixed' ? Number(s.amount||0) : (s.entries||[]).reduce((x,e)=>x+Number(e.amount||0),0);
-      total -= val;
-    }
-  });
-  ccLinked.forEach(c => {
-    const cb = document.querySelector(`input[onchange*="'${accId}','cc_${c.id}'"]`);
-    if (cb && cb.checked) total -= getCCTotal(c,'current');
-  });
+  const avail = calcAvailable(acc);
   const el = document.getElementById(`calc-result-${accId}`);
-  if (el) { el.textContent = '$' + fmt(total); el.style.color = total < 0 ? 'var(--danger)' : 'var(--accent)'; }
+  if (el) { el.textContent = '$' + fmt(avail); el.style.color = avail < 0 ? 'var(--danger)' : 'var(--accent)'; }
 }
 
 function updateCalc(accId, itemId, checked) {
@@ -815,6 +945,7 @@ function openAddSubItem(accId) {
   document.getElementById('sub-name').value = '';
   document.getElementById('sub-type').value = 'fixed';
   document.getElementById('sub-amount').value = '';
+  document.getElementById('sub-sign').value = '-1';
   document.getElementById('sub-note').value = '';
   document.getElementById('sub-fixed-section').style.display = '';
   document.getElementById('modal-subitem-title').textContent = '新增子項目';
@@ -830,16 +961,17 @@ function editSubItem(accId, subId) {
   document.getElementById('sub-name').value = sub.name;
   document.getElementById('sub-type').value = sub.type;
   document.getElementById('sub-amount').value = sub.amount || '';
+  document.getElementById('sub-sign').value = sub.sign || '-1';
   document.getElementById('sub-note').value = sub.note || '';
-  document.getElementById('sub-fixed-section').style.display = sub.type === 'fixed' ? '' : 'none';
+  document.getElementById('sub-fixed-section').style.display = '';
   document.getElementById('modal-subitem-title').textContent = '編輯子項目';
   document.getElementById('modal-add-subitem').dataset.accId = accId;
   openModal('modal-add-subitem');
 }
 
 function toggleSubType() {
-  const t = document.getElementById('sub-type').value;
-  document.getElementById('sub-fixed-section').style.display = t === 'fixed' ? '' : 'none';
+  // Always show amount field - for accum it shows 0
+  document.getElementById('sub-fixed-section').style.display = '';
 }
 
 function saveSubItem() {
@@ -850,14 +982,15 @@ function saveSubItem() {
   const name = document.getElementById('sub-name').value.trim();
   const type = document.getElementById('sub-type').value;
   const amount = document.getElementById('sub-amount').value;
+  const sign = document.getElementById('sub-sign').value;
   const note = document.getElementById('sub-note').value.trim();
   if (!name) return;
   if (!acc.subitems) acc.subitems = [];
   if (editId) {
     const sub = acc.subitems.find(s => s.id === editId);
-    if (sub) { sub.name = name; sub.type = type; sub.note = note; if (type === 'fixed') sub.amount = amount; }
+    if (sub) { sub.name = name; sub.type = type; sub.note = note; sub.sign = sign; if (type === 'fixed') sub.amount = amount; }
   } else {
-    acc.subitems.push({ id: uid(), name, type, amount: type === 'fixed' ? amount : 0, note, entries: [], calcChecked: true });
+    acc.subitems.push({ id: uid(), name, type, amount: type === 'fixed' ? amount : 0, sign, note, entries: [], calcChecked: true });
   }
   persist();
   closeModal('modal-add-subitem');
