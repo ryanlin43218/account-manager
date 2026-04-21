@@ -252,6 +252,18 @@ textarea { resize: vertical; min-height: 60px; }
 .calc-result-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; }
 .calc-result-label { font-size: 13px; font-weight: 600; }
 .calc-result-val { font-family: var(--mono); font-size: 20px; font-weight: 700; }
+.view-toggle { padding: 5px 12px; font-size: 12px; border-radius: 6px; border: none; background: transparent; color: var(--text2); cursor: pointer; font-family: var(--sans); transition: all 0.12s; }
+.view-toggle.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.overview-card { background: var(--surface); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius); padding: 16px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.overview-card-title { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+.overview-card-balance { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 10px; }
+.overview-card-avail { font-size: 12px; color: var(--text3); display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid var(--border); margin-top: 8px; }
+.overview-card-avail span:last-child { font-family: var(--mono); font-weight: 600; }
+/* Draggable tabs */
+.tab[draggable] { cursor: grab; }
+.tab[draggable]:active { cursor: grabbing; }
+.tab.tab-drag-over { border: 1px dashed var(--accent); }
 .ref-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; background: var(--surface2); border-radius: 7px; padding: 6px 8px; }
 .ref-row select { flex: 1; font-size: 12px; padding: 4px 8px; }
 .ref-row .ref-sign-select { width: 90px; font-size: 12px; padding: 4px 8px; }
@@ -325,7 +337,13 @@ textarea { resize: vertical; min-height: 60px; }
     <div class="page" id="page-accounts">
       <div class="page-title flex-between">
         銀行帳戶
-        <button class="btn primary" onclick="openModal('modal-add-account')">＋ 新增帳戶</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="display:flex;background:var(--surface2);border-radius:8px;padding:3px;gap:2px;">
+            <button id="acc-view-tab" class="view-toggle active" onclick="setAccountView('tab')">Tab</button>
+            <button id="acc-view-all" class="view-toggle" onclick="setAccountView('all')">總覽</button>
+          </div>
+          <button class="btn primary" onclick="openAddAccountModal()">＋ 新增帳戶</button>
+        </div>
       </div>
       <div class="tab-bar" id="account-tabs"></div>
       <div id="account-content"></div>
@@ -335,7 +353,13 @@ textarea { resize: vertical; min-height: 60px; }
     <div class="page" id="page-creditcards">
       <div class="page-title flex-between">
         信用卡
-        <button class="btn primary" onclick="openModal('modal-add-card')">＋ 新增信用卡</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="display:flex;background:var(--surface2);border-radius:8px;padding:3px;gap:2px;">
+            <button id="card-view-tab" class="view-toggle active" onclick="setCardView('tab')">Tab</button>
+            <button id="card-view-all" class="view-toggle" onclick="setCardView('all')">總覽</button>
+          </div>
+          <button class="btn primary" onclick="openAddCardModal()">＋ 新增信用卡</button>
+        </div>
       </div>
       <div class="tab-bar" id="card-tabs"></div>
       <div id="card-content"></div>
@@ -711,7 +735,8 @@ function pushUndo() {
 function undo() {
   if (!undoStack.length) return;
   state = JSON.parse(undoStack.pop());
-  persist();
+  saveLocal();
+  if (fileId && token) saveToDrive();
   renderAll();
   updateUndoBtn();
 }
@@ -725,8 +750,15 @@ function persist() {
   if (fileId && token) saveToDrive();
 }
 
+function captureUndo() {
+  // Call this BEFORE modifying state
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  updateUndoBtn();
+}
+
 function persistWithUndo() {
-  pushUndo();
+  // Legacy - just persist now, captureUndo should be called before state changes
   persist();
 }
 
@@ -845,9 +877,22 @@ function renderAccounts() {
   }
   if (currentAccountIdx >= state.accounts.length) currentAccountIdx = 0;
 
-  tabsEl.innerHTML = state.accounts.map((a, i) => `
-    <div class="tab ${i === currentAccountIdx ? 'active' : ''}" onclick="switchAccount(${i})">${a.bank}</div>
-  `).join('') + `<div class="tab add" onclick="openAddAccountModal()">＋ 新增</div>`;
+  const accViewMode = window._accViewMode || 'tab';
+  if (accViewMode === 'tab') {
+    tabsEl.style.display = '';
+    tabsEl.innerHTML = state.accounts.map((a, i) => `
+      <div class="tab ${i === currentAccountIdx ? 'active' : ''}"
+        draggable="true"
+        onclick="switchAccount(${i})"
+        ondragstart="tabDragStart(event,${i},'account')"
+        ondragover="tabDragOver(event,${i},'account')"
+        ondrop="tabDragDrop(event,${i},'account')"
+        ondragleave="tabDragLeave(event)"
+      >${a.bank}</div>
+    `).join('') + `<div class="tab add" onclick="openAddAccountModal()">＋ 新增</div>`;
+  } else {
+    tabsEl.style.display = 'none';
+  }
 
   const acc = state.accounts[currentAccountIdx];
   const ccLinked = state.cards.filter(c => c.accountId === acc.id);
@@ -951,6 +996,36 @@ function renderAccounts() {
     </div>`;
   }).join('');
 
+  // Overview mode
+  const accViewMode2 = window._accViewMode || 'tab';
+  if (accViewMode2 === 'all') {
+    contentEl.innerHTML = `<div class="overview-grid">${state.accounts.map(a => {
+      const ccLinked2 = state.cards.filter(c => c.accountId === a.id);
+      const avail2 = calcAvailable(a);
+      const subRows2 = (a.subitems||[]).map(s => {
+        const val2 = getSubVal(s, a.subitems);
+        const sign2 = Number(s.sign||'-1');
+        const cls2 = sign2 > 0 ? 'pos' : (sign2 < 0 ? 'neg' : 'neutral');
+        return `<div class="row" style="padding:5px 0;font-size:12px;">
+          <span style="color:var(--text2);">${s.name}</span>
+          <span class="subitem-amount ${cls2}" style="font-size:12px;">${sign2>0?'+':''}$${fmt(val2)}</span>
+        </div>`;
+      }).join('');
+      const ccRows2 = ccLinked2.map(c => `
+        <div class="row" style="padding:5px 0;font-size:12px;">
+          <span style="color:var(--text2);">${c.name} 本期</span>
+          <span class="subitem-amount neg" style="font-size:12px;">-$${fmt(getCCTotal(c,'current'))}</span>
+        </div>`).join('');
+      return `<div class="overview-card" onclick="setAccountView('tab');switchAccount(${state.accounts.indexOf(a)})" style="cursor:pointer;">
+        <div class="overview-card-title">${a.bank} — ${a.name}</div>
+        <div class="overview-card-balance">$${fmt(a.balance)}</div>
+        ${subRows2}${ccRows2}
+        <div class="overview-card-avail"><span>可用金額</span><span style="color:${avail2<0?'var(--danger)':'var(--accent)'};">$${fmt(avail2)}</span></div>
+      </div>`;
+    }).join('')}</div>`;
+    return;
+  }
+
   contentEl.innerHTML = `
     <div class="account-layout">
       <div class="card" style="margin-bottom:0;">
@@ -1008,10 +1083,11 @@ function dragDrop(e, targetIdx, accId) {
   const acc = state.accounts.find(a => a.id === accId);
   if (!acc || !acc.subitems) return;
   const items = acc.subitems;
+  captureUndo();
   const [moved] = items.splice(dragSrcIdx, 1);
   items.splice(targetIdx, 0, moved);
   dragSrcIdx = null;
-  persistWithUndo();
+  persist();
   renderAccounts();
 }
 
@@ -1115,6 +1191,7 @@ function toggleSubType() {
 }
 
 function saveSubItem() {
+  captureUndo();
   const accId = document.getElementById('modal-add-subitem').dataset.accId;
   const acc = state.accounts.find(a => a.id === accId);
   if (!acc) return;
@@ -1133,15 +1210,16 @@ function saveSubItem() {
   } else {
     acc.subitems.push({ id: uid(), name, type, amount: type === 'fixed' ? amount : 0, sign, note, refs, entries: [], calcChecked: true });
   }
-  persistWithUndo();
+  persist();
   closeModal('modal-add-subitem');
   renderAccounts();
 }
 
 function deleteSubItem(accId, subId) {
+  captureUndo();
   const acc = state.accounts.find(a => a.id === accId);
   if (acc) acc.subitems = (acc.subitems||[]).filter(s => s.id !== subId);
-  persistWithUndo(); renderAccounts();
+  persist(); renderAccounts();
 }
 
 function openAddAccuEntry(accId, subId) {
@@ -1173,6 +1251,7 @@ function editAccuEntry(accId, subId, entryId) {
 }
 
 function saveAccuEntry() {
+  captureUndo();
   const accId = document.getElementById('modal-add-accu').dataset.accId;
   const subId = document.getElementById('accu-subitem-id').value;
   const entryId = document.getElementById('accu-entry-id').value;
@@ -1192,14 +1271,15 @@ function saveAccuEntry() {
     sub.entries.push({ id: uid(), date, name, amount, note });
     sub.entries.sort((a,b) => a.date < b.date ? -1 : 1);
   }
-  persistWithUndo(); closeModal('modal-add-accu'); renderAccounts();
+  persist(); closeModal('modal-add-accu'); renderAccounts();
 }
 
 function deleteAccuEntry(accId, subId, entryId) {
+  captureUndo();
   const acc = state.accounts.find(a => a.id === accId);
   const sub = (acc.subitems||[]).find(s => s.id === subId);
   if (sub) sub.entries = (sub.entries||[]).filter(e => e.id !== entryId);
-  persistWithUndo(); renderAccounts();
+  persist(); renderAccounts();
 }
 
 // Account CRUD
@@ -1226,6 +1306,7 @@ function editAccount(accId) {
 }
 
 function saveAccount() {
+  captureUndo();
   const name = document.getElementById('acc-name').value.trim();
   const bank = document.getElementById('acc-bank').value.trim();
   const balance = document.getElementById('acc-balance').value;
@@ -1243,6 +1324,7 @@ function saveAccount() {
 }
 
 function deleteAccount(accId) {
+  captureUndo();
   state.accounts = state.accounts.filter(a => a.id !== accId);
   state.cards.forEach(c => { if (c.accountId === accId) c.accountId = ''; });
   if (currentAccountIdx >= state.accounts.length) currentAccountIdx = Math.max(0, state.accounts.length - 1);
@@ -1265,9 +1347,22 @@ function renderCards() {
   }
   if (currentCardIdx >= state.cards.length) currentCardIdx = 0;
 
-  tabsEl.innerHTML = state.cards.map((c, i) => `
-    <div class="tab ${i === currentCardIdx ? 'active' : ''}" onclick="switchCard(${i})">${c.name}</div>
-  `).join('') + `<div class="tab add" onclick="openModal('modal-add-card')">＋ 新增</div>`;
+  const cardViewMode = window._cardViewMode || 'tab';
+  if (cardViewMode === 'tab') {
+    tabsEl.style.display = '';
+    tabsEl.innerHTML = state.cards.map((c, i) => `
+      <div class="tab ${i === currentCardIdx ? 'active' : ''}"
+        draggable="true"
+        onclick="switchCard(${i})"
+        ondragstart="tabDragStart(event,${i},'card')"
+        ondragover="tabDragOver(event,${i},'card')"
+        ondrop="tabDragDrop(event,${i},'card')"
+        ondragleave="tabDragLeave(event)"
+      >${c.name}</div>
+    `).join('') + `<div class="tab add" onclick="openAddCardModal()">＋ 新增</div>`;
+  } else {
+    tabsEl.style.display = 'none';
+  }
 
   const card = state.cards[currentCardIdx];
   const acc = state.accounts.find(a => a.id === card.accountId);
@@ -1296,6 +1391,30 @@ function renderCards() {
       </div>`;
   };
 
+  // Card overview mode
+  const cardViewMode2 = window._cardViewMode || 'tab';
+  if (cardViewMode2 === 'all') {
+    contentEl.innerHTML = `<div class="overview-grid">${state.cards.map(c2 => {
+      const acc2 = state.accounts.find(a => a.id === c2.accountId);
+      const curTotal = getCCTotal(c2,'current');
+      const nextTotal = getCCTotal(c2,'next');
+      const curItems = (c2.currentItems||[]).map(it => `
+        <div class="row" style="padding:4px 0;font-size:12px;">
+          <span style="color:var(--text2);">${it.name}</span>
+          <span class="mono" style="font-size:12px;">$${fmt(it.amount)}</span>
+        </div>`).join('');
+      return `<div class="overview-card" onclick="setCardView('tab');switchCard(${state.cards.indexOf(c2)})" style="cursor:pointer;">
+        <div class="overview-card-title">${c2.name}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">${acc2 ? acc2.bank : '未連結還款帳戶'}</div>
+        <div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px;">本期${c2.currentDate?' · '+c2.currentDate:''}</div>
+        ${curItems || '<div style="font-size:12px;color:var(--text3);">尚無項目</div>'}
+        <div class="overview-card-avail"><span>本期合計</span><span style="color:var(--danger);">$${fmt(curTotal)}</span></div>
+        ${nextTotal > 0 ? `<div class="overview-card-avail" style="border-top:none;padding-top:0;"><span style="color:var(--text3);">下期預計</span><span style="color:var(--amber);">$${fmt(nextTotal)}</span></div>` : ''}
+      </div>`;
+    }).join('')}</div>`;
+    return;
+  }
+
   contentEl.innerHTML = `
     <div class="card">
       <div class="card-header">
@@ -1319,18 +1438,58 @@ function renderCards() {
 
 function switchCard(i) { currentCardIdx = i; renderCards(); }
 
+// ─── View mode ────────────────────────────────────────────────────
+function setAccountView(mode) {
+  window._accViewMode = mode;
+  document.getElementById('acc-view-tab').classList.toggle('active', mode==='tab');
+  document.getElementById('acc-view-all').classList.toggle('active', mode==='all');
+  renderAccounts();
+}
+function setCardView(mode) {
+  window._cardViewMode = mode;
+  document.getElementById('card-view-tab').classList.toggle('active', mode==='tab');
+  document.getElementById('card-view-all').classList.toggle('active', mode==='all');
+  renderCards();
+}
+
+// ─── Tab drag and drop ────────────────────────────────────────────
+let tabDragSrcIdx = null;
+let tabDragType = null;
+function tabDragStart(e, idx, type) { tabDragSrcIdx = idx; tabDragType = type; }
+function tabDragOver(e, idx, type) { e.preventDefault(); e.currentTarget.classList.add('tab-drag-over'); }
+function tabDragLeave(e) { e.currentTarget.classList.remove('tab-drag-over'); }
+function tabDragDrop(e, targetIdx, type) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('tab-drag-over');
+  if (tabDragSrcIdx === null || tabDragSrcIdx === targetIdx || tabDragType !== type) return;
+  captureUndo();
+  if (type === 'account') {
+    const [moved] = state.accounts.splice(tabDragSrcIdx, 1);
+    state.accounts.splice(targetIdx, 0, moved);
+    currentAccountIdx = targetIdx;
+    persist(); renderAccounts();
+  } else {
+    const [moved] = state.cards.splice(tabDragSrcIdx, 1);
+    state.cards.splice(targetIdx, 0, moved);
+    currentCardIdx = targetIdx;
+    persist(); renderCards();
+  }
+  tabDragSrcIdx = null;
+}
+
 function rolloverCard(cardId) {
   if (!confirm('結帳換期：下期項目將變成本期，本期項目將清空，帳單日期也會互換。確定嗎？')) return;
   const card = state.cards.find(c => c.id === cardId);
   if (!card) return;
   // Move next -> current, clear next
+  captureUndo();
   card.currentItems = JSON.parse(JSON.stringify(card.nextItems||[]));
   card.nextItems = [];
   // Swap dates
   const tmpDate = card.currentDate||'';
   card.currentDate = card.nextDate||'';
   card.nextDate = '';
-  persistWithUndo();
+  persist();
   renderCards();
 }
 
@@ -1360,6 +1519,7 @@ function editCCItem(cardId, period, itemId) {
 }
 
 function saveCCItem() {
+  captureUndo();
   const cardId = document.getElementById('cc-item-card-id').value;
   const period = document.getElementById('cc-item-period').value;
   const editId = document.getElementById('cc-item-edit-id').value;
@@ -1381,9 +1541,10 @@ function saveCCItem() {
 }
 
 function deleteCCItem(cardId, period, itemId) {
+  captureUndo();
   const card = state.cards.find(c => c.id === cardId);
   if (card) card[period+'Items'] = (card[period+'Items']||[]).filter(i => i.id !== itemId);
-  persistWithUndo(); renderCards();
+  persist(); renderCards();
 }
 
 function openEditCCDates(cardId) {
@@ -1395,13 +1556,14 @@ function openEditCCDates(cardId) {
 }
 
 function saveCCDates() {
+  captureUndo();
   const cardId = document.getElementById('cc-dates-card-id').value;
   const card = state.cards.find(c => c.id === cardId);
   if (card) {
     card.currentDate = document.getElementById('cc-current-date').value;
     card.nextDate = document.getElementById('cc-next-date').value;
   }
-  persistWithUndo(); closeModal('modal-edit-cc-dates'); renderCards();
+  persist(); closeModal('modal-edit-cc-dates'); renderCards();
 }
 
 function editCard(cardId) {
@@ -1414,6 +1576,7 @@ function editCard(cardId) {
 }
 
 function saveCard() {
+  captureUndo();
   const editId = document.getElementById('card-edit-id').value;
   const name = document.getElementById('card-name').value.trim();
   const accountId = document.getElementById('card-account').value;
@@ -1426,10 +1589,11 @@ function saveCard() {
     state.cards.push({ id: uid(), name, accountId, currentItems: [], nextItems: [], currentDate: '', nextDate: '' });
     currentCardIdx = state.cards.length - 1;
   }
-  persistWithUndo(); closeModal('modal-add-card'); renderCards();
+  persist(); closeModal('modal-add-card'); renderCards();
 }
 
 function deleteCard(cardId) {
+  captureUndo();
   state.cards = state.cards.filter(c => c.id !== cardId);
   if (currentCardIdx >= state.cards.length) currentCardIdx = Math.max(0, state.cards.length - 1);
   persist(); renderCards();
@@ -1450,6 +1614,9 @@ function openAddCardModal() {
   document.getElementById('modal-add-card-title').textContent = '新增信用卡';
   openModal('modal-add-card');
 }
+
+// Override inline onclick handlers that were set before functions were defined
+document.addEventListener('DOMContentLoaded', () => {});
 
 // Override the + button for card
 document.querySelector('[onclick="openModal(\'modal-add-card\')"]').setAttribute('onclick', 'openAddCardModal()');
@@ -1486,6 +1653,7 @@ function renderExpected() {
 }
 
 function toggleExpected(id, checked) {
+  captureUndo();
   const e = state.expected.find(e => e.id === id);
   if (e) e.done = checked;
   persist(); renderExpected();
@@ -1502,6 +1670,7 @@ function editExpected(id) {
 }
 
 function saveExpected() {
+  captureUndo();
   const editId = document.getElementById('exp-edit-id').value;
   const name = document.getElementById('exp-name').value.trim();
   const amount = document.getElementById('exp-amount').value;
@@ -1514,12 +1683,13 @@ function saveExpected() {
   } else {
     state.expected.push({ id: uid(), name, amount, note, done: false });
   }
-  persistWithUndo(); closeModal('modal-add-expected'); renderExpected();
+  persist(); closeModal('modal-add-expected'); renderExpected();
 }
 
 function deleteExpected(id) {
+  captureUndo();
   state.expected = state.expected.filter(e => e.id !== id);
-  persistWithUndo(); renderExpected();
+  persist(); renderExpected();
 }
 
 // Open add expected with cleared state
