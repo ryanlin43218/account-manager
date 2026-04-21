@@ -292,6 +292,7 @@ textarea { resize: vertical; min-height: 60px; }
     </div>
     <div class="sidebar-footer">
       <button class="btn-save" onclick="saveSnapshot()">💾 儲存目前版本</button>
+      <button id="btn-undo" class="btn" style="width:100%;font-size:12px;margin-top:8px;" onclick="undo()" disabled>↩ 復原上一步</button>
       <div style="margin-top:10px;">
         <div id="drive-status" style="font-size:11px;color:var(--text3);margin-bottom:6px;">本機儲存模式</div>
         <button id="btn-drive-connect" class="btn" style="width:100%;font-size:12px;" onclick="signInDrive()">🔗 連結 Google Drive</button>
@@ -637,13 +638,30 @@ async function loadFromDrive() {
 async function saveToDrive() {
   if (!fileId || !token) { saveLocal(); return; }
   try {
-    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+    const resp = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(state)
     });
+    if (resp.status === 401) {
+      // Token expired, re-auth silently
+      token = null;
+      updateDriveStatus('disconnected');
+      saveLocal();
+      return;
+    }
+    if (!resp.ok) { saveLocal(); return; }
     saveLocal();
-  } catch(e) { saveLocal(); }
+    showSaveIndicator('☁️ 已同步');
+  } catch(e) { saveLocal(); showSaveIndicator('⚠️ Drive 同步失敗，已存本機'); }
+}
+
+function showSaveIndicator(msg) {
+  const el = document.getElementById('drive-status');
+  if (!el) return;
+  const prev = el.textContent;
+  el.textContent = msg;
+  setTimeout(() => { el.textContent = '☁️ Google Drive 已連結'; }, 2000);
 }
 
 // ─── Local Storage Fallback ────────────────────────────────────────
@@ -653,7 +671,36 @@ function loadLocal() {
   if (raw) { try { state = JSON.parse(raw); } catch(e) {} }
   renderAll();
 }
-function persist() { saveLocal(); if (fileId && token) saveToDrive(); }
+
+// ─── Undo history ─────────────────────────────────────────────────
+const undoStack = [];
+const MAX_UNDO = 30;
+function pushUndo() {
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  updateUndoBtn();
+}
+function undo() {
+  if (!undoStack.length) return;
+  state = JSON.parse(undoStack.pop());
+  persist();
+  renderAll();
+  updateUndoBtn();
+}
+function updateUndoBtn() {
+  const btn = document.getElementById('btn-undo');
+  if (btn) btn.disabled = undoStack.length === 0;
+}
+
+function persist() {
+  saveLocal();
+  if (fileId && token) saveToDrive();
+}
+
+function persistWithUndo() {
+  pushUndo();
+  persist();
+}
 
 // ─── Navigation ───────────────────────────────────────────────────
 function switchPage(id) {
@@ -672,8 +719,11 @@ function switchPage(id) {
 // ─── Modals ───────────────────────────────────────────────────────
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+// Modals only close via buttons or ESC, not by clicking outside
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  }
 });
 
 // ─── Overview ─────────────────────────────────────────────────────
@@ -933,7 +983,7 @@ function dragDrop(e, targetIdx, accId) {
   const [moved] = items.splice(dragSrcIdx, 1);
   items.splice(targetIdx, 0, moved);
   dragSrcIdx = null;
-  persist();
+  persistWithUndo();
   renderAccounts();
 }
 
@@ -1055,7 +1105,7 @@ function saveSubItem() {
   } else {
     acc.subitems.push({ id: uid(), name, type, amount: type === 'fixed' ? amount : 0, sign, note, refs, entries: [], calcChecked: true });
   }
-  persist();
+  persistWithUndo();
   closeModal('modal-add-subitem');
   renderAccounts();
 }
@@ -1063,7 +1113,7 @@ function saveSubItem() {
 function deleteSubItem(accId, subId) {
   const acc = state.accounts.find(a => a.id === accId);
   if (acc) acc.subitems = (acc.subitems||[]).filter(s => s.id !== subId);
-  persist(); renderAccounts();
+  persistWithUndo(); renderAccounts();
 }
 
 function openAddAccuEntry(accId, subId) {
@@ -1114,14 +1164,14 @@ function saveAccuEntry() {
     sub.entries.push({ id: uid(), date, name, amount, note });
     sub.entries.sort((a,b) => a.date < b.date ? -1 : 1);
   }
-  persist(); closeModal('modal-add-accu'); renderAccounts();
+  persistWithUndo(); closeModal('modal-add-accu'); renderAccounts();
 }
 
 function deleteAccuEntry(accId, subId, entryId) {
   const acc = state.accounts.find(a => a.id === accId);
   const sub = (acc.subitems||[]).find(s => s.id === subId);
   if (sub) sub.entries = (sub.entries||[]).filter(e => e.id !== entryId);
-  persist(); renderAccounts();
+  persistWithUndo(); renderAccounts();
 }
 
 // Account CRUD
@@ -1252,7 +1302,7 @@ function rolloverCard(cardId) {
   const tmpDate = card.currentDate||'';
   card.currentDate = card.nextDate||'';
   card.nextDate = '';
-  persist();
+  persistWithUndo();
   renderCards();
 }
 
@@ -1305,7 +1355,7 @@ function saveCCItem() {
 function deleteCCItem(cardId, period, itemId) {
   const card = state.cards.find(c => c.id === cardId);
   if (card) card[period+'Items'] = (card[period+'Items']||[]).filter(i => i.id !== itemId);
-  persist(); renderCards();
+  persistWithUndo(); renderCards();
 }
 
 function openEditCCDates(cardId) {
@@ -1323,7 +1373,7 @@ function saveCCDates() {
     card.currentDate = document.getElementById('cc-current-date').value;
     card.nextDate = document.getElementById('cc-next-date').value;
   }
-  persist(); closeModal('modal-edit-cc-dates'); renderCards();
+  persistWithUndo(); closeModal('modal-edit-cc-dates'); renderCards();
 }
 
 function editCard(cardId) {
@@ -1348,7 +1398,7 @@ function saveCard() {
     state.cards.push({ id: uid(), name, accountId, currentItems: [], nextItems: [], currentDate: '', nextDate: '' });
     currentCardIdx = state.cards.length - 1;
   }
-  persist(); closeModal('modal-add-card'); renderCards();
+  persistWithUndo(); closeModal('modal-add-card'); renderCards();
 }
 
 function deleteCard(cardId) {
@@ -1436,12 +1486,12 @@ function saveExpected() {
   } else {
     state.expected.push({ id: uid(), name, amount, note, done: false });
   }
-  persist(); closeModal('modal-add-expected'); renderExpected();
+  persistWithUndo(); closeModal('modal-add-expected'); renderExpected();
 }
 
 function deleteExpected(id) {
   state.expected = state.expected.filter(e => e.id !== id);
-  persist(); renderExpected();
+  persistWithUndo(); renderExpected();
 }
 
 // Open add expected with cleared state
