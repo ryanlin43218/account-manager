@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>帳務管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface2: #f0f0f2;
+  --border: #e0e0e4;
+  --border2: #c8c8cc;
+  --text: #1d1d1f;
+  --text2: #6e6e73;
+  --text3: #aeaeb2;
+  --accent: #0071e3;
+  --accent-light: #e8f2fd;
+  --accent2: #0051a8;
+  --accent2-light: #d4e6f8;
+  --danger: #ff3b30;
+  --danger-light: #fff2f1;
+  --amber: #9a6a00;
+  --amber-light: #fff8e6;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Noto Sans TC', sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+/* Layout */
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
+.main { margin-left: 220px; flex: 1; padding: 32px 36px; max-width: 880px; }
+
+/* Sidebar */
+.sidebar-header { padding: 28px 20px 16px; border-bottom: 1px solid var(--border); background: transparent; }
+.sidebar-title { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; color: var(--text); }
+.sidebar-sub { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: var(--mono); letter-spacing: 0.5px; text-transform: uppercase; }
+.nav { padding: 12px 0; flex: 1; }
+.nav-section { padding: 16px 20px 4px; font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; margin: 1px 8px; font-size: 14px; color: var(--text2); cursor: pointer; transition: all 0.12s; border-left: none; border-radius: 8px; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; border-left: none; }
+.nav-icon { width: 15px; height: 15px; opacity: 0.55; flex-shrink: 0; }
+.nav-item.active .nav-icon { opacity: 1; }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); background: transparent; }
+.btn-save { width: 100%; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 9px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--sans); transition: all 0.12s; letter-spacing: -0.1px; }
+.btn-save:hover { opacity: 0.85; }
+
+/* Pages */
+.page { display: none; }
+.page.active { display: block; }
+.page-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 24px; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.card-title { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+.card-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* Metric grid */
+.metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.metric { background: var(--surface); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius); padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); }
+.metric-label { font-size: 11px; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; font-weight: 500; }
+.metric-value { font-size: 22px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.5px; }
+.metric-value.green { color: var(--accent); }
+.metric-value.red { color: var(--danger); }
+.metric-value.amber { color: var(--amber); }
+
+/* Table rows */
+.row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 14px; gap: 12px; }
+.row:last-child { border-bottom: none; padding-bottom: 0; }
+.row-label { color: var(--text2); display: flex; align-items: center; gap: 6px; }
+.row-value { font-family: var(--mono); font-weight: 500; }
+.row-value.muted { color: var(--text3); font-weight: 400; }
+.row-value.red { color: var(--danger); }
+.row-value.green { color: var(--accent); }
+
+/* Tags & Badges */
+.tag { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--surface2); color: var(--text3); border: none; font-family: var(--mono); letter-spacing: 0.3px; }
+.badge { font-size: 12px; padding: 4px 12px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border); color: var(--text2); background: var(--surface); transition: all 0.12s; white-space: nowrap; font-weight: 400; }
+.badge:hover { background: var(--surface2); }
+.badge.primary { background: var(--accent); color: white; border-color: var(--accent); }
+.badge.danger { background: var(--danger-light); color: var(--danger); border-color: #f5c6c2; }
+
+/* Tabs */
+.tab-bar { display: flex; gap: 4px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 2px; background: var(--surface2); border-radius: 10px; padding: 4px; }
+.tab { padding: 7px 16px; font-size: 13px; border-radius: 7px; cursor: pointer; color: var(--text2); border: none; white-space: nowrap; transition: all 0.12s; }
+.tab:hover { background: var(--surface2); }
+.tab.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.tab.add { color: var(--text3); }
+.tab.add:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Buttons */
+.btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; font-family: var(--sans); transition: all 0.12s; font-weight: 400; }
+.btn:hover { background: var(--surface2); }
+.btn.primary { background: var(--accent); color: white; border-color: var(--accent); font-weight: 500; }
+.btn.primary:hover { opacity: 0.85; }
+.btn.danger { background: var(--danger-light); color: var(--danger); border-color: #f5c6c2; }
+.btn.sm { padding: 4px 10px; font-size: 11px; }
+
+/* Inputs */
+input[type=text], input[type=number], input[type=date], textarea, select {
+  background: var(--surface2); border: 1px solid transparent; border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; font-family: var(--sans); color: var(--text);
+  width: 100%; outline: none; transition: all 0.12s;
+}
+input[type=text]:focus, input[type=number]:focus, input[type=date]:focus, textarea:focus, select:focus {
+  border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+}
+input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+textarea { resize: vertical; min-height: 60px; }
+
+/* Form */
+.form-row { margin-bottom: 12px; }
+.form-label { font-size: 12px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* Calc box */
+.calc-box { background: var(--surface2); border: none; border-radius: 10px; padding: 16px; margin-top: 12px; }
+.calc-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 13px; }
+.calc-result { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border2); display: flex; justify-content: space-between; font-weight: 600; font-size: 15px; }
+.calc-result-val { font-family: var(--mono); color: var(--accent); }
+
+/* CC grid */
+.cc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cc-period-title { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.cc-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--border); gap: 8px; }
+.cc-item:last-child { border-bottom: none; }
+.cc-total { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border2); font-family: var(--mono); }
+
+/* Todo */
+.todo-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.todo-item:last-child { border-bottom: none; }
+.todo-check-wrap { padding-top: 2px; }
+.todo-content { flex: 1; }
+.todo-name { font-size: 14px; font-weight: 500; }
+.todo-name.done { text-decoration: line-through; color: var(--text3); }
+.todo-note { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.todo-right { display: flex; align-items: center; gap: 10px; }
+.todo-amount { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+.todo-amount.done { color: var(--text3); text-decoration: line-through; }
+
+/* Accumulate entries */
+.accu-entries { margin-top: 8px; padding-left: 4px; }
+.accu-entry { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 5px 8px; border-radius: var(--radius-sm); background: var(--surface2); margin-bottom: 4px; }
+.accu-entry-date { color: var(--text3); font-family: var(--mono); white-space: nowrap; }
+.accu-entry-name { flex: 1; color: var(--text2); }
+.accu-entry-note { color: var(--text3); font-style: italic; }
+.accu-entry-amount { font-family: var(--mono); font-weight: 500; }
+.accu-total { font-size: 12px; color: var(--text3); margin-top: 4px; font-family: var(--mono); }
+.accu-expand { cursor: pointer; font-size: 11px; color: var(--text3); padding: 2px 0; display: inline-block; }
+.accu-expand:hover { color: var(--accent); }
+
+/* Snapshot */
+.snapshot-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.snapshot-item:last-child { border-bottom: none; }
+.snapshot-date { font-size: 13px; font-weight: 500; font-family: var(--mono); }
+.snapshot-note { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.snapshot-actions { display: flex; gap: 8px; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 999; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: 16px; padding: 28px; width: 90%; max-width: 480px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08); }
+.modal-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.3px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+/* Divider */
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* Empty state */
+.empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+
+/* Responsive */
+@media (max-width: 700px) {
+  .sidebar { width: 100%; height: auto; position: fixed; bottom: 0; top: auto; border-right: none; border-top: 1px solid var(--border); z-index: 100; }
+  .nav { display: flex; overflow-x: auto; padding: 0; }
+  .nav-section { display: none; }
+  .nav-item { flex-direction: column; gap: 2px; padding: 10px 16px; font-size: 10px; border-left: none; border-bottom: 2px solid transparent; min-width: 60px; text-align: center; }
+  .nav-item.active { border-bottom-color: var(--accent); border-left-color: transparent; }
+  .sidebar-header, .sidebar-footer { display: none; }
+  .main { margin-left: 0; margin-bottom: 70px; padding: 20px 16px; }
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+  .cc-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr; }
+}
+
+.flex-end { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.text-sm { font-size: 12px; color: var(--text3); }
+.mono { font-family: var(--mono); }
+.sub-items-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.sub-items-title { font-size: 12px; font-weight: 600; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">帳務管理</div>
+      <div class="sidebar-sub">個人財務追蹤</div>
+    </div>
+    <div class="nav">
+      <div class="nav-section">主要</div>
+      <div class="nav-item active" onclick="switchPage('overview')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        總覽
+      </div>
+      <div class="nav-item" onclick="switchPage('accounts')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 6h14"/><path d="M4 10h2"/></svg>
+        銀行帳戶
+      </div>
+      <div class="nav-item" onclick="switchPage('creditcards')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 7h14"/><circle cx="12" cy="10.5" r="1.5"/></svg>
+        信用卡
+      </div>
+      <div class="nav-section">管理</div>
+      <div class="nav-item" onclick="switchPage('expected')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M3 4h10M3 12h6"/></svg>
+        預期支出
+      </div>
+      <div class="nav-item" onclick="switchPage('history')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        歷史快照
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn-save" onclick="saveSnapshot()">💾 儲存目前版本</button>
+      <div style="margin-top:10px;">
+        <div id="drive-status" style="font-size:11px;color:var(--text3);margin-bottom:6px;">本機儲存模式</div>
+        <button id="btn-drive-connect" class="btn" style="width:100%;font-size:12px;" onclick="signInDrive()">🔗 連結 Google Drive</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- 總覽 -->
+    <div class="page active" id="page-overview">
+      <div class="page-title">總覽</div>
+      <div class="metric-grid" id="overview-metrics"></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">帳戶餘額</div></div>
+        <div id="overview-accounts"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">信用卡本期</div></div>
+        <div id="overview-cards"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">預期支出（未處理）</div></div>
+        <div id="overview-expected"></div>
+      </div>
+    </div>
+
+    <!-- 銀行帳戶 -->
+    <div class="page" id="page-accounts">
+      <div class="page-title flex-between">
+        銀行帳戶
+        <button class="btn primary" onclick="openModal('modal-add-account')">＋ 新增帳戶</button>
+      </div>
+      <div class="tab-bar" id="account-tabs"></div>
+      <div id="account-content"></div>
+    </div>
+
+    <!-- 信用卡 -->
+    <div class="page" id="page-creditcards">
+      <div class="page-title flex-between">
+        信用卡
+        <button class="btn primary" onclick="openModal('modal-add-card')">＋ 新增信用卡</button>
+      </div>
+      <div class="tab-bar" id="card-tabs"></div>
+      <div id="card-content"></div>
+    </div>
+
+    <!-- 預期支出 -->
+    <div class="page" id="page-expected">
+      <div class="page-title flex-between">
+        預期支出
+        <button class="btn primary" onclick="openModal('modal-add-expected')">＋ 新增項目</button>
+      </div>
+      <div class="card" id="expected-list"></div>
+    </div>
+
+    <!-- 歷史快照 -->
+    <div class="page" id="page-history">
+      <div class="page-title">歷史快照</div>
+      <div class="card">
+        <div id="snapshot-list"></div>
+        <div id="snapshot-empty" class="empty" style="display:none;">尚無快照，點選左側「儲存目前版本」建立第一份快照。</div>
+      </div>
+      <div class="flex-end mt-16">
+        <button class="btn" onclick="importData()">📥 匯入備份</button>
+        <button class="btn" onclick="exportAll()">📤 匯出全部資料</button>
+      </div>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+    </div>
+  </div>
+</div>
+
+<!-- Modals -->
+<!-- Add Account -->
+<div class="modal-overlay" id="modal-add-account">
+  <div class="modal">
+    <div class="modal-title" id="modal-add-account-title">新增帳戶</div>
+    <div class="form-row"><div class="form-label">帳戶名稱</div><input type="text" id="acc-name" placeholder="例：薪資帳戶"></div>
+    <div class="form-row"><div class="form-label">銀行名稱</div><input type="text" id="acc-bank" placeholder="例：玉山銀行"></div>
+    <div class="form-row"><div class="form-label">目前餘額</div><input type="number" id="acc-balance" placeholder="0"></div>
+    <div class="form-row"><div class="form-label">備註</div><textarea id="acc-note" placeholder="可選"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-account')">取消</button>
+      <button class="btn primary" onclick="saveAccount()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Sub-item -->
+<div class="modal-overlay" id="modal-add-subitem">
+  <div class="modal">
+    <div class="modal-title" id="modal-subitem-title">新增子項目</div>
+    <input type="hidden" id="subitem-edit-id">
+    <div class="form-row"><div class="form-label">項目名稱</div><input type="text" id="sub-name" placeholder="例：緊急預備金"></div>
+    <div class="form-row">
+      <div class="form-label">類型</div>
+      <select id="sub-type" onchange="toggleSubType()">
+        <option value="fixed">固定金額型</option>
+        <option value="accum">累計記錄型</option>
+      </select>
+    </div>
+    <div id="sub-fixed-section" class="form-row"><div class="form-label">金額</div><input type="number" id="sub-amount" placeholder="0"></div>
+    <div class="form-row"><div class="form-label">備註</div><textarea id="sub-note" placeholder="可選"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-subitem')">取消</button>
+      <button class="btn primary" onclick="saveSubItem()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Accumulate Entry -->
+<div class="modal-overlay" id="modal-add-accu">
+  <div class="modal">
+    <div class="modal-title" id="modal-accu-title">新增記錄</div>
+    <input type="hidden" id="accu-subitem-id">
+    <input type="hidden" id="accu-entry-id">
+    <div class="form-row"><div class="form-label">日期</div><input type="date" id="accu-date"></div>
+    <div class="form-row"><div class="form-label">項目名稱</div><input type="text" id="accu-name" placeholder="例：車險費用"></div>
+    <div class="form-row"><div class="form-label">金額</div><input type="number" id="accu-amount" placeholder="0"></div>
+    <div class="form-row"><div class="form-label">備註</div><textarea id="accu-note" placeholder="可選"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-accu')">取消</button>
+      <button class="btn primary" onclick="saveAccuEntry()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Credit Card -->
+<div class="modal-overlay" id="modal-add-card">
+  <div class="modal">
+    <div class="modal-title" id="modal-add-card-title">新增信用卡</div>
+    <input type="hidden" id="card-edit-id">
+    <div class="form-row"><div class="form-label">卡片名稱</div><input type="text" id="card-name" placeholder="例：玉山 Ubear"></div>
+    <div class="form-row"><div class="form-label">還款連結帳戶（可不選）</div><select id="card-account"><option value="">— 不連結 —</option></select></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-card')">取消</button>
+      <button class="btn primary" onclick="saveCard()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add CC Item -->
+<div class="modal-overlay" id="modal-add-cc-item">
+  <div class="modal">
+    <div class="modal-title" id="modal-cc-item-title">新增刷卡項目</div>
+    <input type="hidden" id="cc-item-card-id">
+    <input type="hidden" id="cc-item-period">
+    <input type="hidden" id="cc-item-edit-id">
+    <div class="form-row"><div class="form-label">項目名稱</div><input type="text" id="cc-item-name" placeholder="例：Netflix"></div>
+    <div class="form-row"><div class="form-label">金額</div><input type="number" id="cc-item-amount" placeholder="0"></div>
+    <div class="form-row"><div class="form-label">備註</div><textarea id="cc-item-note" placeholder="可選"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-cc-item')">取消</button>
+      <button class="btn primary" onclick="saveCCItem()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Expected -->
+<div class="modal-overlay" id="modal-add-expected">
+  <div class="modal">
+    <div class="modal-title" id="modal-expected-title">新增預期支出</div>
+    <input type="hidden" id="exp-edit-id">
+    <div class="form-row"><div class="form-label">項目名稱</div><input type="text" id="exp-name" placeholder="例：水電費"></div>
+    <div class="form-row"><div class="form-label">金額</div><input type="number" id="exp-amount" placeholder="0"></div>
+    <div class="form-row"><div class="form-label">備註</div><textarea id="exp-note" placeholder="例：每月繳，這個月到期"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-expected')">取消</button>
+      <button class="btn primary" onclick="saveExpected()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit CC dates modal -->
+<div class="modal-overlay" id="modal-edit-cc-dates">
+  <div class="modal">
+    <div class="modal-title">編輯帳單日期</div>
+    <input type="hidden" id="cc-dates-card-id">
+    <div class="form-row"><div class="form-label">本期帳單日期</div><input type="text" id="cc-current-date" placeholder="例：4/15 — 5/14"></div>
+    <div class="form-row"><div class="form-label">下期帳單日期</div><input type="text" id="cc-next-date" placeholder="例：5/15 —"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-edit-cc-dates')">取消</button>
+      <button class="btn primary" onclick="saveCCDates()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal">
+    <div class="modal-title">確認刪除</div>
+    <p style="color:var(--text2);font-size:14px;" id="confirm-msg">確定要刪除嗎？此操作無法復原。</p>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-confirm')">取消</button>
+      <button class="btn danger" onclick="confirmDelete()">刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Snapshot -->
+<div class="modal-overlay" id="modal-view-snapshot">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-title" id="snapshot-view-title">快照</div>
+    <div id="snapshot-view-content" style="font-size:13px;color:var(--text2);"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-view-snapshot')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────
+const DRIVE_FILE_NAME = 'account_manager_data.json';
+let gapi_ready = false;
+let token = null;
+let fileId = null;
+
+let state = {
+  accounts: [],
+  cards: [],
+  expected: [],
+  snapshots: []
+};
+let currentAccountIdx = 0;
+let currentCardIdx = 0;
+let deleteCallback = null;
+let editAccountId = null;
+
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function fmt(n) { return Number(n||0).toLocaleString('zh-TW'); }
+function today() { return new Date().toISOString().slice(0,10); }
+function now() { return new Date().toLocaleString('zh-TW'); }
+
+// ─── Google Drive ─────────────────────────────────────────────────
+const CLIENT_ID = '442270377077-tu0veghdmtt28bgrqcs02l7s9kh3oa19.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+let gapiLoaded = false, gisLoaded = false, tokenClient;
+
+function initGapi() {
+  gapi.load('client', async () => {
+    await gapi.client.init({});
+    await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+    gapiLoaded = true;
+    tryAutoLoad();
+  });
+}
+function initGis() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: async (resp) => {
+      if (resp.error) { loadLocal(); return; }
+      token = resp.access_token;
+      updateDriveStatus('connected');
+      await findOrCreateFile();
+      await loadFromDrive();
+    }
+  });
+  gisLoaded = true;
+  tryAutoLoad();
+}
+function tryAutoLoad() {
+  if (!gapiLoaded || !gisLoaded) return;
+  const saved = localStorage.getItem('acct_mgr_token_hint');
+  if (saved) {
+    tokenClient.requestAccessToken({ prompt: '' });
+  } else {
+    loadLocal();
+  }
+}
+
+async function signInDrive() {
+  localStorage.setItem('acct_mgr_token_hint', '1');
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function updateDriveStatus(status) {
+  const el = document.getElementById('drive-status');
+  if (!el) return;
+  if (status === 'connected') {
+    el.textContent = '☁️ Google Drive 已連結';
+    el.style.color = 'var(--accent)';
+    document.getElementById('btn-drive-connect').style.display = 'none';
+  } else {
+    el.textContent = '本機儲存模式';
+    el.style.color = 'var(--text3)';
+    document.getElementById('btn-drive-connect').style.display = '';
+  }
+}
+
+async function findOrCreateFile() {
+  const res = await gapi.client.drive.files.list({
+    q: `name='${DRIVE_FILE_NAME}' and trashed=false`,
+    fields: 'files(id,name)',
+    spaces: 'drive'
+  });
+  const files = res.result.files;
+  if (files && files.length > 0) {
+    fileId = files[0].id;
+  } else {
+    const meta = { name: DRIVE_FILE_NAME, mimeType: 'application/json' };
+    const body = JSON.stringify(state);
+    const boundary = '-------314159265358979323846';
+    const multipart = `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${boundary}--`;
+    const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': `multipart/related; boundary="${boundary}"` },
+      body: multipart
+    });
+    const data = await resp.json();
+    fileId = data.id;
+  }
+}
+
+async function loadFromDrive() {
+  if (!fileId || !token) { loadLocal(); return; }
+  try {
+    const resp = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await resp.json();
+    if (data && data.accounts) { state = data; }
+    updateDriveStatus('connected');
+    renderAll();
+  } catch(e) { loadLocal(); }
+}
+
+async function saveToDrive() {
+  if (!fileId || !token) { saveLocal(); return; }
+  try {
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    });
+    saveLocal();
+  } catch(e) { saveLocal(); }
+}
+
+// ─── Local Storage Fallback ────────────────────────────────────────
+function saveLocal() { localStorage.setItem('account_manager_v1', JSON.stringify(state)); }
+function loadLocal() {
+  const raw = localStorage.getItem('account_manager_v1');
+  if (raw) { try { state = JSON.parse(raw); } catch(e) {} }
+  renderAll();
+}
+function persist() { saveLocal(); if (fileId && token) saveToDrive(); }
+
+// ─── Navigation ───────────────────────────────────────────────────
+function switchPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const map = { overview: 0, accounts: 1, creditcards: 2, expected: 3, history: 4 };
+  document.querySelectorAll('.nav-item')[map[id]].classList.add('active');
+  if (id === 'overview') renderOverview();
+  if (id === 'accounts') renderAccounts();
+  if (id === 'creditcards') renderCards();
+  if (id === 'expected') renderExpected();
+  if (id === 'history') renderHistory();
+}
+
+// ─── Modals ───────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ─── Overview ─────────────────────────────────────────────────────
+function renderOverview() {
+  const totalBalance = state.accounts.reduce((s, a) => s + Number(a.balance||0), 0);
+  const totalCC = state.cards.reduce((s, c) => s + getCCTotal(c, 'current'), 0);
+  const totalExp = state.expected.filter(e => !e.done).reduce((s, e) => s + Number(e.amount||0), 0);
+
+  document.getElementById('overview-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">帳戶總餘額</div><div class="metric-value green">$${fmt(totalBalance)}</div></div>
+    <div class="metric"><div class="metric-label">信用卡本期合計</div><div class="metric-value red">$${fmt(totalCC)}</div></div>
+    <div class="metric"><div class="metric-label">預期支出合計</div><div class="metric-value amber">$${fmt(totalExp)}</div></div>
+  `;
+
+  const accEl = document.getElementById('overview-accounts');
+  if (!state.accounts.length) { accEl.innerHTML = '<div class="empty">尚無帳戶</div>'; }
+  else accEl.innerHTML = state.accounts.map(a => `
+    <div class="row">
+      <span class="row-label">${a.bank} — ${a.name}</span>
+      <span class="row-value mono">$${fmt(a.balance)}</span>
+    </div>`).join('');
+
+  const ccEl = document.getElementById('overview-cards');
+  if (!state.cards.length) { ccEl.innerHTML = '<div class="empty">尚無信用卡</div>'; }
+  else ccEl.innerHTML = state.cards.map(c => {
+    const acc = state.accounts.find(a => a.id === c.accountId);
+    return `<div class="row">
+      <span class="row-label">${c.name}${acc ? ` <span class="tag">連結：${acc.bank}</span>` : ''}</span>
+      <span class="row-value red mono">$${fmt(getCCTotal(c,'current'))}</span>
+    </div>`;
+  }).join('');
+
+  const expEl = document.getElementById('overview-expected');
+  const pending = state.expected.filter(e => !e.done);
+  if (!pending.length) { expEl.innerHTML = '<div class="empty">目前無未處理的預期支出</div>'; }
+  else expEl.innerHTML = pending.map(e => `
+    <div class="row">
+      <span class="row-label">${e.name}${e.note ? ` <span class="text-sm">${e.note}</span>` : ''}</span>
+      <span class="row-value mono">$${fmt(e.amount)}</span>
+    </div>`).join('');
+}
+
+// ─── Accounts ────────────────────────────────────────────────────
+function renderAccounts() {
+  const tabsEl = document.getElementById('account-tabs');
+  const contentEl = document.getElementById('account-content');
+
+  if (!state.accounts.length) {
+    tabsEl.innerHTML = '';
+    contentEl.innerHTML = '<div class="empty">尚無帳戶，點選右上角新增</div>';
+    return;
+  }
+  if (currentAccountIdx >= state.accounts.length) currentAccountIdx = 0;
+
+  tabsEl.innerHTML = state.accounts.map((a, i) => `
+    <div class="tab ${i === currentAccountIdx ? 'active' : ''}" onclick="switchAccount(${i})">${a.bank}</div>
+  `).join('') + `<div class="tab add" onclick="openModal('modal-add-account')">＋ 新增</div>`;
+
+  const acc = state.accounts[currentAccountIdx];
+  const ccLinked = state.cards.filter(c => c.accountId === acc.id);
+
+  // Build sub-items HTML
+  let subHtml = '';
+  if (!acc.subitems || !acc.subitems.length) {
+    subHtml = '<div class="empty" style="padding:20px 0;">尚無子項目</div>';
+  } else {
+    subHtml = acc.subitems.map(s => {
+      if (s.type === 'fixed') {
+        return `<div class="row">
+          <span class="row-label">${s.name} <span class="tag">固定</span>${s.note ? ` <span class="text-sm">${s.note}</span>` : ''}</span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span class="row-value mono">$${fmt(s.amount)}</span>
+            <button class="btn sm" onclick="editSubItem('${acc.id}','${s.id}')">編輯</button>
+            <button class="btn sm danger" onclick="deleteItem(()=>{deleteSubItem('${acc.id}','${s.id}')})">刪除</button>
+          </span>
+        </div>`;
+      } else {
+        const total = (s.entries||[]).reduce((x,e)=>x+Number(e.amount||0),0);
+        const entriesHtml = (s.entries||[]).map(e => `
+          <div class="accu-entry">
+            <span class="accu-entry-date">${e.date}</span>
+            <span class="accu-entry-name">${e.name}</span>
+            ${e.note ? `<span class="accu-entry-note">${e.note}</span>` : ''}
+            <span class="accu-entry-amount">$${fmt(e.amount)}</span>
+            <button class="btn sm" onclick="editAccuEntry('${acc.id}','${s.id}','${e.id}')">編輯</button>
+            <button class="btn sm danger" onclick="deleteItem(()=>{deleteAccuEntry('${acc.id}','${s.id}','${e.id}')})">✕</button>
+          </div>`).join('');
+        return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span class="row-label">${s.name} <span class="tag">累計</span>${s.note ? ` <span class="text-sm">${s.note}</span>` : ''}</span>
+            <span style="display:flex;align-items:center;gap:8px;">
+              <span class="row-value mono">$${fmt(total)}</span>
+              <button class="btn sm" onclick="openAddAccuEntry('${acc.id}','${s.id}')">＋ 新增記錄</button>
+              <button class="btn sm" onclick="editSubItem('${acc.id}','${s.id}')">編輯</button>
+              <button class="btn sm danger" onclick="deleteItem(()=>{deleteSubItem('${acc.id}','${s.id}')})">刪除</button>
+            </span>
+          </div>
+          <div class="accu-entries">${entriesHtml || '<div class="text-sm" style="padding:4px 0;">尚無記錄</div>'}</div>
+        </div>`;
+      }
+    }).join('');
+  }
+
+  // Linked CC rows
+  const ccRows = ccLinked.map(c => `
+    <div class="row">
+      <span class="row-label">${c.name} <span class="tag">信用卡</span></span>
+      <span class="row-value red mono">$${fmt(getCCTotal(c,'current'))}</span>
+    </div>`).join('');
+
+  // Calc box
+  let calcItems = (acc.subitems||[]).map(s => {
+    const val = s.type === 'fixed' ? Number(s.amount||0) : (s.entries||[]).reduce((x,e)=>x+Number(e.amount||0),0);
+    const checked = s.calcChecked !== false ? 'checked' : '';
+    return { id: s.id, name: s.name, val, checked };
+  });
+  ccLinked.forEach(c => {
+    const val = getCCTotal(c,'current');
+    const checked = (acc.ccCalcChecked||{})[c.id] !== false ? 'checked' : '';
+    calcItems.push({ id: 'cc_'+c.id, name: c.name+' 本期', val, checked });
+  });
+
+  const calcHtml = calcItems.map(it => `
+    <div class="calc-row">
+      <input type="checkbox" ${it.checked} onchange="updateCalc('${acc.id}','${it.id}',this.checked)">
+      <span style="flex:1">${it.name}</span>
+      <span class="mono">$${fmt(it.val)}</span>
+    </div>`).join('');
+
+  function calcResult() {
+    let deduct = 0;
+    calcItems.forEach(it => {
+      const el = document.querySelector(`[data-calc="${acc.id}-${it.id}"]`);
+      const checked = el ? el.checked : it.checked === 'checked';
+      if (checked) deduct += it.val;
+    });
+    return Number(acc.balance||0) - deduct;
+  }
+
+  contentEl.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${acc.bank} — ${acc.name}</div>
+          <div class="card-sub">目前餘額 <span class="mono">$${fmt(acc.balance)}</span></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="badge" onclick="editAccount('${acc.id}')">編輯帳戶</button>
+          <button class="badge danger" onclick="deleteItem(()=>{deleteAccount('${acc.id}')})">刪除</button>
+        </div>
+      </div>
+      ${acc.note ? `<div class="text-sm" style="margin-bottom:12px;">${acc.note}</div>` : ''}
+      <div class="sub-items-header">
+        <div class="sub-items-title">子項目</div>
+        <button class="btn sm" onclick="openAddSubItem('${acc.id}')">＋ 新增子項目</button>
+      </div>
+      ${subHtml}
+      ${ccRows}
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px;">可用金額計算</div>
+      <div class="calc-box">
+        ${calcHtml || '<div class="text-sm">尚無子項目可計算</div>'}
+        ${calcItems.length ? `<div class="calc-result"><span>可用金額</span><span class="calc-result-val" id="calc-result-${acc.id}">$${fmt(Number(acc.balance||0))}</span></div>` : ''}
+      </div>
+    </div>
+  `;
+  updateCalcDisplay(acc.id);
+}
+
+function updateCalcDisplay(accId) {
+  const acc = state.accounts.find(a => a.id === accId);
+  if (!acc) return;
+  const ccLinked = state.cards.filter(c => c.accountId === accId);
+  let total = Number(acc.balance||0);
+  (acc.subitems||[]).forEach(s => {
+    const cb = document.querySelector(`input[onchange*="'${accId}','${s.id}'"]`);
+    if (cb && cb.checked) {
+      const val = s.type === 'fixed' ? Number(s.amount||0) : (s.entries||[]).reduce((x,e)=>x+Number(e.amount||0),0);
+      total -= val;
+    }
+  });
+  ccLinked.forEach(c => {
+    const cb = document.querySelector(`input[onchange*="'${accId}','cc_${c.id}'"]`);
+    if (cb && cb.checked) total -= getCCTotal(c,'current');
+  });
+  const el = document.getElementById(`calc-result-${accId}`);
+  if (el) { el.textContent = '$' + fmt(total); el.style.color = total < 0 ? 'var(--danger)' : 'var(--accent)'; }
+}
+
+function updateCalc(accId, itemId, checked) {
+  const acc = state.accounts.find(a => a.id === accId);
+  if (!acc) return;
+  if (itemId.startsWith('cc_')) {
+    if (!acc.ccCalcChecked) acc.ccCalcChecked = {};
+    acc.ccCalcChecked[itemId.slice(3)] = checked;
+  } else {
+    const sub = (acc.subitems||[]).find(s => s.id === itemId);
+    if (sub) sub.calcChecked = checked;
+  }
+  persist();
+  updateCalcDisplay(accId);
+}
+
+function switchAccount(i) { currentAccountIdx = i; renderAccounts(); }
+
+function openAddSubItem(accId) {
+  document.getElementById('subitem-edit-id').value = '';
+  document.getElementById('sub-name').value = '';
+  document.getElementById('sub-type').value = 'fixed';
+  document.getElementById('sub-amount').value = '';
+  document.getElementById('sub-note').value = '';
+  document.getElementById('sub-fixed-section').style.display = '';
+  document.getElementById('modal-subitem-title').textContent = '新增子項目';
+  document.getElementById('modal-add-subitem').dataset.accId = accId;
+  openModal('modal-add-subitem');
+}
+
+function editSubItem(accId, subId) {
+  const acc = state.accounts.find(a => a.id === accId);
+  const sub = (acc.subitems||[]).find(s => s.id === subId);
+  if (!sub) return;
+  document.getElementById('subitem-edit-id').value = subId;
+  document.getElementById('sub-name').value = sub.name;
+  document.getElementById('sub-type').value = sub.type;
+  document.getElementById('sub-amount').value = sub.amount || '';
+  document.getElementById('sub-note').value = sub.note || '';
+  document.getElementById('sub-fixed-section').style.display = sub.type === 'fixed' ? '' : 'none';
+  document.getElementById('modal-subitem-title').textContent = '編輯子項目';
+  document.getElementById('modal-add-subitem').dataset.accId = accId;
+  openModal('modal-add-subitem');
+}
+
+function toggleSubType() {
+  const t = document.getElementById('sub-type').value;
+  document.getElementById('sub-fixed-section').style.display = t === 'fixed' ? '' : 'none';
+}
+
+function saveSubItem() {
+  const accId = document.getElementById('modal-add-subitem').dataset.accId;
+  const acc = state.accounts.find(a => a.id === accId);
+  if (!acc) return;
+  const editId = document.getElementById('subitem-edit-id').value;
+  const name = document.getElementById('sub-name').value.trim();
+  const type = document.getElementById('sub-type').value;
+  const amount = document.getElementById('sub-amount').value;
+  const note = document.getElementById('sub-note').value.trim();
+  if (!name) return;
+  if (!acc.subitems) acc.subitems = [];
+  if (editId) {
+    const sub = acc.subitems.find(s => s.id === editId);
+    if (sub) { sub.name = name; sub.type = type; sub.note = note; if (type === 'fixed') sub.amount = amount; }
+  } else {
+    acc.subitems.push({ id: uid(), name, type, amount: type === 'fixed' ? amount : 0, note, entries: [], calcChecked: true });
+  }
+  persist();
+  closeModal('modal-add-subitem');
+  renderAccounts();
+}
+
+function deleteSubItem(accId, subId) {
+  const acc = state.accounts.find(a => a.id === accId);
+  if (acc) acc.subitems = (acc.subitems||[]).filter(s => s.id !== subId);
+  persist(); renderAccounts();
+}
+
+function openAddAccuEntry(accId, subId) {
+  document.getElementById('accu-subitem-id').value = subId;
+  document.getElementById('accu-entry-id').value = '';
+  document.getElementById('accu-date').value = today();
+  document.getElementById('accu-name').value = '';
+  document.getElementById('accu-amount').value = '';
+  document.getElementById('accu-note').value = '';
+  document.getElementById('modal-accu-title').textContent = '新增記錄';
+  document.getElementById('modal-add-accu').dataset.accId = accId;
+  openModal('modal-add-accu');
+}
+
+function editAccuEntry(accId, subId, entryId) {
+  const acc = state.accounts.find(a => a.id === accId);
+  const sub = (acc.subitems||[]).find(s => s.id === subId);
+  const entry = (sub.entries||[]).find(e => e.id === entryId);
+  if (!entry) return;
+  document.getElementById('accu-subitem-id').value = subId;
+  document.getElementById('accu-entry-id').value = entryId;
+  document.getElementById('accu-date').value = entry.date;
+  document.getElementById('accu-name').value = entry.name;
+  document.getElementById('accu-amount').value = entry.amount;
+  document.getElementById('accu-note').value = entry.note || '';
+  document.getElementById('modal-accu-title').textContent = '編輯記錄';
+  document.getElementById('modal-add-accu').dataset.accId = accId;
+  openModal('modal-add-accu');
+}
+
+function saveAccuEntry() {
+  const accId = document.getElementById('modal-add-accu').dataset.accId;
+  const subId = document.getElementById('accu-subitem-id').value;
+  const entryId = document.getElementById('accu-entry-id').value;
+  const acc = state.accounts.find(a => a.id === accId);
+  const sub = (acc.subitems||[]).find(s => s.id === subId);
+  if (!sub) return;
+  const date = document.getElementById('accu-date').value;
+  const name = document.getElementById('accu-name').value.trim();
+  const amount = document.getElementById('accu-amount').value;
+  const note = document.getElementById('accu-note').value.trim();
+  if (!name) return;
+  if (!sub.entries) sub.entries = [];
+  if (entryId) {
+    const e = sub.entries.find(e => e.id === entryId);
+    if (e) { e.date = date; e.name = name; e.amount = amount; e.note = note; }
+  } else {
+    sub.entries.push({ id: uid(), date, name, amount, note });
+    sub.entries.sort((a,b) => a.date < b.date ? -1 : 1);
+  }
+  persist(); closeModal('modal-add-accu'); renderAccounts();
+}
+
+function deleteAccuEntry(accId, subId, entryId) {
+  const acc = state.accounts.find(a => a.id === accId);
+  const sub = (acc.subitems||[]).find(s => s.id === subId);
+  if (sub) sub.entries = (sub.entries||[]).filter(e => e.id !== entryId);
+  persist(); renderAccounts();
+}
+
+// Account CRUD
+function openAddAccountModal() {
+  editAccountId = null;
+  document.getElementById('acc-name').value = '';
+  document.getElementById('acc-bank').value = '';
+  document.getElementById('acc-balance').value = '';
+  document.getElementById('acc-note').value = '';
+  document.getElementById('modal-add-account-title').textContent = '新增帳戶';
+  openModal('modal-add-account');
+}
+
+function editAccount(accId) {
+  const acc = state.accounts.find(a => a.id === accId);
+  if (!acc) return;
+  editAccountId = accId;
+  document.getElementById('acc-name').value = acc.name;
+  document.getElementById('acc-bank').value = acc.bank;
+  document.getElementById('acc-balance').value = acc.balance;
+  document.getElementById('acc-note').value = acc.note || '';
+  document.getElementById('modal-add-account-title').textContent = '編輯帳戶';
+  openModal('modal-add-account');
+}
+
+function saveAccount() {
+  const name = document.getElementById('acc-name').value.trim();
+  const bank = document.getElementById('acc-bank').value.trim();
+  const balance = document.getElementById('acc-balance').value;
+  const note = document.getElementById('acc-note').value.trim();
+  if (!name || !bank) return;
+  if (editAccountId) {
+    const acc = state.accounts.find(a => a.id === editAccountId);
+    if (acc) { acc.name = name; acc.bank = bank; acc.balance = balance; acc.note = note; }
+    editAccountId = null;
+  } else {
+    state.accounts.push({ id: uid(), name, bank, balance, note, subitems: [] });
+    currentAccountIdx = state.accounts.length - 1;
+  }
+  persist(); closeModal('modal-add-account'); renderAccounts();
+}
+
+function deleteAccount(accId) {
+  state.accounts = state.accounts.filter(a => a.id !== accId);
+  state.cards.forEach(c => { if (c.accountId === accId) c.accountId = ''; });
+  if (currentAccountIdx >= state.accounts.length) currentAccountIdx = Math.max(0, state.accounts.length - 1);
+  persist(); renderAccounts();
+}
+
+// ─── Credit Cards ─────────────────────────────────────────────────
+function getCCTotal(card, period) {
+  return ((card[period+'Items'])||[]).reduce((s,i)=>s+Number(i.amount||0),0);
+}
+
+function renderCards() {
+  const tabsEl = document.getElementById('card-tabs');
+  const contentEl = document.getElementById('card-content');
+
+  if (!state.cards.length) {
+    tabsEl.innerHTML = '';
+    contentEl.innerHTML = '<div class="empty">尚無信用卡，點選右上角新增</div>';
+    return;
+  }
+  if (currentCardIdx >= state.cards.length) currentCardIdx = 0;
+
+  tabsEl.innerHTML = state.cards.map((c, i) => `
+    <div class="tab ${i === currentCardIdx ? 'active' : ''}" onclick="switchCard(${i})">${c.name}</div>
+  `).join('') + `<div class="tab add" onclick="openModal('modal-add-card')">＋ 新增</div>`;
+
+  const card = state.cards[currentCardIdx];
+  const acc = state.accounts.find(a => a.id === card.accountId);
+
+  const renderPeriod = (period, label) => {
+    const items = (card[period+'Items']||[]);
+    const total = items.reduce((s,i)=>s+Number(i.amount||0),0);
+    const dateKey = period+'Date';
+    return `
+      <div>
+        <div class="cc-period-title">
+          ${label}
+          <button class="btn sm" onclick="openEditCCDates('${card.id}')">編輯日期</button>
+        </div>
+        ${card[dateKey] ? `<div class="text-sm" style="margin-bottom:8px;">${card[dateKey]}</div>` : ''}
+        ${items.map(it => `
+          <div class="cc-item">
+            <span style="flex:1;">${it.name}${it.note?` <span class="text-sm">${it.note}</span>`:''}</span>
+            <span class="mono">$${fmt(it.amount)}</span>
+            <button class="btn sm" onclick="editCCItem('${card.id}','${period}','${it.id}')">編輯</button>
+            <button class="btn sm danger" onclick="deleteItem(()=>{deleteCCItem('${card.id}','${period}','${it.id}')})">✕</button>
+          </div>`).join('')}
+        ${!items.length ? '<div class="text-sm" style="padding:6px 0;">尚無刷卡項目</div>' : ''}
+        <button class="btn sm" style="margin-top:8px;" onclick="openAddCCItem('${card.id}','${period}')">＋ 新增項目</button>
+        <div class="cc-total"><span>合計</span><span style="color:var(--danger);">$${fmt(total)}</span></div>
+      </div>`;
+  };
+
+  contentEl.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${card.name}</div>
+          <div class="card-sub">還款帳戶：${acc ? acc.bank+' — '+acc.name : '未連結'}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="badge" onclick="editCard('${card.id}')">編輯</button>
+          <button class="badge danger" onclick="deleteItem(()=>{deleteCard('${card.id}')})">刪除</button>
+        </div>
+      </div>
+      <div class="cc-grid">
+        ${renderPeriod('current','本期')}
+        ${renderPeriod('next','下期')}
+      </div>
+    </div>
+  `;
+}
+
+function switchCard(i) { currentCardIdx = i; renderCards(); }
+
+function openAddCCItem(cardId, period) {
+  document.getElementById('cc-item-card-id').value = cardId;
+  document.getElementById('cc-item-period').value = period;
+  document.getElementById('cc-item-edit-id').value = '';
+  document.getElementById('cc-item-name').value = '';
+  document.getElementById('cc-item-amount').value = '';
+  document.getElementById('cc-item-note').value = '';
+  document.getElementById('modal-cc-item-title').textContent = '新增刷卡項目';
+  openModal('modal-add-cc-item');
+}
+
+function editCCItem(cardId, period, itemId) {
+  const card = state.cards.find(c => c.id === cardId);
+  const item = (card[period+'Items']||[]).find(i => i.id === itemId);
+  if (!item) return;
+  document.getElementById('cc-item-card-id').value = cardId;
+  document.getElementById('cc-item-period').value = period;
+  document.getElementById('cc-item-edit-id').value = itemId;
+  document.getElementById('cc-item-name').value = item.name;
+  document.getElementById('cc-item-amount').value = item.amount;
+  document.getElementById('cc-item-note').value = item.note || '';
+  document.getElementById('modal-cc-item-title').textContent = '編輯刷卡項目';
+  openModal('modal-add-cc-item');
+}
+
+function saveCCItem() {
+  const cardId = document.getElementById('cc-item-card-id').value;
+  const period = document.getElementById('cc-item-period').value;
+  const editId = document.getElementById('cc-item-edit-id').value;
+  const name = document.getElementById('cc-item-name').value.trim();
+  const amount = document.getElementById('cc-item-amount').value;
+  const note = document.getElementById('cc-item-note').value.trim();
+  if (!name) return;
+  const card = state.cards.find(c => c.id === cardId);
+  if (!card) return;
+  const key = period+'Items';
+  if (!card[key]) card[key] = [];
+  if (editId) {
+    const item = card[key].find(i => i.id === editId);
+    if (item) { item.name = name; item.amount = amount; item.note = note; }
+  } else {
+    card[key].push({ id: uid(), name, amount, note });
+  }
+  persist(); closeModal('modal-add-cc-item'); renderCards();
+}
+
+function deleteCCItem(cardId, period, itemId) {
+  const card = state.cards.find(c => c.id === cardId);
+  if (card) card[period+'Items'] = (card[period+'Items']||[]).filter(i => i.id !== itemId);
+  persist(); renderCards();
+}
+
+function openEditCCDates(cardId) {
+  const card = state.cards.find(c => c.id === cardId);
+  document.getElementById('cc-dates-card-id').value = cardId;
+  document.getElementById('cc-current-date').value = card.currentDate || '';
+  document.getElementById('cc-next-date').value = card.nextDate || '';
+  openModal('modal-edit-cc-dates');
+}
+
+function saveCCDates() {
+  const cardId = document.getElementById('cc-dates-card-id').value;
+  const card = state.cards.find(c => c.id === cardId);
+  if (card) {
+    card.currentDate = document.getElementById('cc-current-date').value;
+    card.nextDate = document.getElementById('cc-next-date').value;
+  }
+  persist(); closeModal('modal-edit-cc-dates'); renderCards();
+}
+
+function editCard(cardId) {
+  const card = state.cards.find(c => c.id === cardId);
+  document.getElementById('card-edit-id').value = cardId;
+  document.getElementById('card-name').value = card.name;
+  populateAccountSelect('card-account', card.accountId);
+  document.getElementById('modal-add-card-title').textContent = '編輯信用卡';
+  openModal('modal-add-card');
+}
+
+function saveCard() {
+  const editId = document.getElementById('card-edit-id').value;
+  const name = document.getElementById('card-name').value.trim();
+  const accountId = document.getElementById('card-account').value;
+  if (!name) return;
+  if (editId) {
+    const card = state.cards.find(c => c.id === editId);
+    if (card) { card.name = name; card.accountId = accountId; }
+    document.getElementById('card-edit-id').value = '';
+  } else {
+    state.cards.push({ id: uid(), name, accountId, currentItems: [], nextItems: [], currentDate: '', nextDate: '' });
+    currentCardIdx = state.cards.length - 1;
+  }
+  persist(); closeModal('modal-add-card'); renderCards();
+}
+
+function deleteCard(cardId) {
+  state.cards = state.cards.filter(c => c.id !== cardId);
+  if (currentCardIdx >= state.cards.length) currentCardIdx = Math.max(0, state.cards.length - 1);
+  persist(); renderCards();
+}
+
+function populateAccountSelect(selectId, selectedId) {
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = '<option value="">— 不連結 —</option>' +
+    state.accounts.map(a => `<option value="${a.id}" ${a.id === selectedId ? 'selected' : ''}>${a.bank} — ${a.name}</option>`).join('');
+}
+
+// Open add card modal (refresh account list)
+document.getElementById('modal-add-card').querySelector('[onclick="openModal(\'modal-add-card\')"]');
+function openAddCardModal() {
+  document.getElementById('card-edit-id').value = '';
+  document.getElementById('card-name').value = '';
+  populateAccountSelect('card-account', '');
+  document.getElementById('modal-add-card-title').textContent = '新增信用卡';
+  openModal('modal-add-card');
+}
+
+// Override the + button for card
+document.querySelector('[onclick="openModal(\'modal-add-card\')"]').setAttribute('onclick', 'openAddCardModal()');
+document.querySelector('[onclick="openModal(\'modal-add-account\')"]').setAttribute('onclick', 'openAddAccountModal()');
+
+// ─── Expected ─────────────────────────────────────────────────────
+function renderExpected() {
+  const el = document.getElementById('expected-list');
+  if (!state.expected.length) { el.innerHTML = '<div class="empty">尚無預期支出</div>'; return; }
+  const pending = state.expected.filter(e => !e.done);
+  const done = state.expected.filter(e => e.done);
+  const renderItem = e => `
+    <div class="todo-item">
+      <div class="todo-check-wrap">
+        <input type="checkbox" ${e.done ? 'checked' : ''} onchange="toggleExpected('${e.id}',this.checked)">
+      </div>
+      <div class="todo-content">
+        <div class="todo-name ${e.done ? 'done' : ''}">${e.name}</div>
+        ${e.note ? `<div class="todo-note">${e.note}</div>` : ''}
+      </div>
+      <div class="todo-right">
+        <span class="todo-amount ${e.done ? 'done' : ''} mono">$${fmt(e.amount)}</span>
+        <button class="btn sm" onclick="editExpected('${e.id}')">編輯</button>
+        <button class="btn sm danger" onclick="deleteItem(()=>{deleteExpected('${e.id}')})">刪除</button>
+      </div>
+    </div>`;
+  let html = pending.map(renderItem).join('');
+  if (done.length) {
+    html += `<div class="divider"></div><div class="text-sm" style="margin-bottom:8px;">已處理</div>` + done.map(renderItem).join('');
+  }
+  const total = pending.reduce((s,e)=>s+Number(e.amount||0),0);
+  html += `<div style="display:flex;justify-content:flex-end;padding-top:12px;border-top:1px solid var(--border);margin-top:8px;"><span class="text-sm">未處理合計</span>&nbsp;<span class="mono" style="font-weight:600;">$${fmt(total)}</span></div>`;
+  el.innerHTML = html;
+}
+
+function toggleExpected(id, checked) {
+  const e = state.expected.find(e => e.id === id);
+  if (e) e.done = checked;
+  persist(); renderExpected();
+}
+
+function editExpected(id) {
+  const e = state.expected.find(e => e.id === id);
+  document.getElementById('exp-edit-id').value = id;
+  document.getElementById('exp-name').value = e.name;
+  document.getElementById('exp-amount').value = e.amount;
+  document.getElementById('exp-note').value = e.note || '';
+  document.getElementById('modal-expected-title').textContent = '編輯預期支出';
+  openModal('modal-add-expected');
+}
+
+function saveExpected() {
+  const editId = document.getElementById('exp-edit-id').value;
+  const name = document.getElementById('exp-name').value.trim();
+  const amount = document.getElementById('exp-amount').value;
+  const note = document.getElementById('exp-note').value.trim();
+  if (!name) return;
+  if (editId) {
+    const e = state.expected.find(e => e.id === editId);
+    if (e) { e.name = name; e.amount = amount; e.note = note; }
+    document.getElementById('exp-edit-id').value = '';
+  } else {
+    state.expected.push({ id: uid(), name, amount, note, done: false });
+  }
+  persist(); closeModal('modal-add-expected'); renderExpected();
+}
+
+function deleteExpected(id) {
+  state.expected = state.expected.filter(e => e.id !== id);
+  persist(); renderExpected();
+}
+
+// Open add expected with cleared state
+document.querySelector('[onclick="openModal(\'modal-add-expected\')"]').setAttribute('onclick', `openAddExpected()`);
+function openAddExpected() {
+  document.getElementById('exp-edit-id').value = '';
+  document.getElementById('exp-name').value = '';
+  document.getElementById('exp-amount').value = '';
+  document.getElementById('exp-note').value = '';
+  document.getElementById('modal-expected-title').textContent = '新增預期支出';
+  openModal('modal-add-expected');
+}
+
+// ─── Delete confirm ───────────────────────────────────────────────
+function deleteItem(cb) { deleteCallback = cb; openModal('modal-confirm'); }
+function confirmDelete() { if (deleteCallback) { deleteCallback(); deleteCallback = null; } closeModal('modal-confirm'); }
+
+// ─── Snapshots ────────────────────────────────────────────────────
+function saveSnapshot() {
+  const snap = { id: uid(), time: now(), data: JSON.parse(JSON.stringify(state)) };
+  if (!state.snapshots) state.snapshots = [];
+  state.snapshots.unshift(snap);
+  persist();
+  alert('✅ 版本已儲存：' + snap.time);
+  if (document.getElementById('page-history').classList.contains('active')) renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('snapshot-list');
+  const empty = document.getElementById('snapshot-empty');
+  const snaps = state.snapshots || [];
+  if (!snaps.length) { el.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  el.innerHTML = snaps.map(s => `
+    <div class="snapshot-item">
+      <div>
+        <div class="snapshot-date">${s.time}</div>
+        <div class="snapshot-note">手動儲存</div>
+      </div>
+      <div class="snapshot-actions">
+        <button class="btn sm" onclick="viewSnapshot('${s.id}')">查看</button>
+        <button class="btn sm" onclick="exportSnapshot('${s.id}')">匯出</button>
+        <button class="btn sm danger" onclick="deleteItem(()=>{deleteSnapshot('${s.id}')})">刪除</button>
+      </div>
+    </div>`).join('');
+}
+
+function viewSnapshot(id) {
+  const snap = (state.snapshots||[]).find(s => s.id === id);
+  if (!snap) return;
+  const d = snap.data;
+  const accTotal = (d.accounts||[]).reduce((s,a)=>s+Number(a.balance||0),0);
+  const expTotal = (d.expected||[]).filter(e=>!e.done).reduce((s,e)=>s+Number(e.amount||0),0);
+  document.getElementById('snapshot-view-title').textContent = '快照：' + snap.time;
+  document.getElementById('snapshot-view-content').innerHTML = `
+    <div style="margin-bottom:12px;"><strong>帳戶總餘額</strong>：$${fmt(accTotal)}</div>
+    ${(d.accounts||[]).map(a=>`<div style="padding:4px 0;">• ${a.bank} — ${a.name}：$${fmt(a.balance)}</div>`).join('')}
+    <div class="divider"></div>
+    <div style="margin-bottom:12px;"><strong>未處理預期支出</strong>：$${fmt(expTotal)}</div>
+    ${(d.expected||[]).filter(e=>!e.done).map(e=>`<div style="padding:4px 0;">• ${e.name}：$${fmt(e.amount)}</div>`).join('')}
+  `;
+  openModal('modal-view-snapshot');
+}
+
+function exportSnapshot(id) {
+  const snap = (state.snapshots||[]).find(s => s.id === id);
+  if (!snap) return;
+  download(JSON.stringify(snap.data, null, 2), `帳務快照_${snap.time.replace(/[/:]/g,'_')}.json`);
+}
+
+function deleteSnapshot(id) {
+  state.snapshots = (state.snapshots||[]).filter(s => s.id !== id);
+  persist(); renderHistory();
+}
+
+function exportAll() {
+  download(JSON.stringify(state, null, 2), `帳務管理_全部資料_${now().replace(/[/:]/g,'_')}.json`);
+}
+
+function importData() { document.getElementById('import-file').click(); }
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.accounts) {
+        if (confirm('匯入後會覆蓋目前所有資料，確定嗎？')) {
+          state = data;
+          persist(); renderAll();
+          alert('✅ 匯入成功');
+        }
+      } else alert('❌ 檔案格式不正確');
+    } catch(err) { alert('❌ 無法解析檔案：' + err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function download(content, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
+  a.download = filename;
+  a.click();
+}
+
+// ─── Render all ───────────────────────────────────────────────────
+function renderAll() {
+  renderOverview();
+  renderAccounts();
+  renderCards();
+  renderExpected();
+  renderHistory();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────
+loadLocal();
+</script>
+
+<!-- Google APIs (optional, loads silently) -->
+<script async defer src="https://apis.google.com/js/api.js" onload="initGapi()"></script>
+<script async defer src="https://accounts.google.com/gsi/client" onload="initGis()"></script>
+
+</body>
+</html>
