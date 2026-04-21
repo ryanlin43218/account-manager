@@ -19,8 +19,8 @@
   --accent-light: #e8f2fd;
   --accent2: #0051a8;
   --accent2-light: #d4e6f8;
-  --danger: #ff3b30;
-  --danger-light: #fff2f1;
+  --danger: #9e4a4a;
+  --danger-light: #f7eeee;
   --amber: #9a6a00;
   --amber-light: #fff8e6;
   --mono: 'DM Mono', monospace;
@@ -252,6 +252,10 @@ textarea { resize: vertical; min-height: 60px; }
 .calc-result-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; }
 .calc-result-label { font-size: 13px; font-weight: 600; }
 .calc-result-val { font-family: var(--mono); font-size: 20px; font-weight: 700; }
+.ref-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; background: var(--surface2); border-radius: 7px; padding: 6px 8px; }
+.ref-row select { flex: 1; font-size: 12px; padding: 4px 8px; }
+.ref-row .ref-sign-select { width: 90px; font-size: 12px; padding: 4px 8px; }
+.ref-preview { font-size: 12px; color: var(--text3); margin-top: 4px; font-family: var(--mono); }
 </style>
 </head>
 <body>
@@ -400,6 +404,12 @@ textarea { resize: vertical; min-height: 60px; }
     </div>
     <div id="sub-fixed-section" class="form-row"><div class="form-label">金額（累計型請填 0，由記錄加總）</div><input type="number" id="sub-amount" placeholder="0"></div>
     <div class="form-row"><div class="form-label">備註</div><textarea id="sub-note" placeholder="可選"></textarea></div>
+    <div class="form-row">
+      <div class="form-label" style="margin-bottom:8px;">引用其他子項目（可選）</div>
+      <div id="sub-refs-list" style="margin-bottom:8px;"></div>
+      <button class="btn sm" type="button" onclick="addSubRef()">＋ 新增引用</button>
+      <div class="text-sm" style="margin-top:6px;">此子項目的金額 = 自身金額 ＋ 所有引用項目的加總</div>
+    </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-add-subitem')">取消</button>
       <button class="btn primary" onclick="saveSubItem()">儲存</button>
@@ -709,8 +719,18 @@ function renderOverview() {
 // ─── Accounts ────────────────────────────────────────────────────
 let expandedSubitems = {};
 
-function getSubVal(s) {
-  return s.type === 'fixed' ? Number(s.amount||0) : (s.entries||[]).reduce((x,e)=>x+Number(e.amount||0),0);
+function getSubVal(s, allSubitems) {
+  let base = s.type === 'fixed' ? Number(s.amount||0) : (s.entries||[]).reduce((x,e)=>x+Number(e.amount||0),0);
+  // Add referenced subitems
+  if (s.refs && s.refs.length && allSubitems) {
+    s.refs.forEach(ref => {
+      const target = allSubitems.find(t => t.id === ref.subId);
+      if (!target || target.id === s.id) return; // avoid self-ref
+      const targetVal = target.type === 'fixed' ? Number(target.amount||0) : (target.entries||[]).reduce((x,e)=>x+Number(e.amount||0),0);
+      base += Number(ref.sign||1) * targetVal;
+    });
+  }
+  return base;
 }
 
 function getSignLabel(sign) {
@@ -726,7 +746,7 @@ function calcAvailable(acc) {
     if (s.calcChecked === false) return;
     const sign = Number(s.sign||'-1');
     if (sign === 0) return;
-    const val = getSubVal(s);
+    const val = getSubVal(s, acc.subitems);
     total += sign * val;
   });
   ccLinked.forEach(c => {
@@ -760,7 +780,7 @@ function renderAccounts() {
     subHtml = '<div class="empty" style="padding:12px 0;font-size:13px;">尚無子項目</div>';
   } else {
     subHtml = acc.subitems.map((s, idx) => {
-      const val = getSubVal(s);
+      const val = getSubVal(s, acc.subitems);
       const sign = Number(s.sign||'-1');
       const amtClass = sign === 0 ? 'neutral' : (sign > 0 ? 'pos' : 'neg');
       const amtPrefix = sign > 0 ? '+' : '';
@@ -798,6 +818,7 @@ function renderAccounts() {
             <span class="subitem-name">${s.name}</span>
             <span class="tag">${s.type === 'fixed' ? '固定' : '累計'}</span>
             ${getSignLabel(s.sign||'-1')}
+            ${(s.refs&&s.refs.length) ? `<span class="tag" style="color:var(--accent);">引用 ${s.refs.length} 項</span>` : ''}
             ${s.note ? `<span class="text-sm">${s.note}</span>` : ''}
           </div>
           ${entriesHtml}
@@ -830,7 +851,7 @@ function renderAccounts() {
   const avail = calcAvailable(acc);
   const calcRows = (acc.subitems||[]).map(s => {
     const sign = Number(s.sign||'-1');
-    const val = getSubVal(s);
+    const val = getSubVal(s, acc.subitems);
     const effVal = sign * val;
     const checked = s.calcChecked !== false;
     const amtClass = effVal >= 0 ? 'pos' : 'neg';
@@ -940,7 +961,10 @@ function updateCalc(accId, itemId, checked) {
 
 function switchAccount(i) { currentAccountIdx = i; renderAccounts(); }
 
+let currentSubRefs = [];
+
 function openAddSubItem(accId) {
+  currentSubRefs = [];
   document.getElementById('subitem-edit-id').value = '';
   document.getElementById('sub-name').value = '';
   document.getElementById('sub-type').value = 'fixed';
@@ -950,13 +974,50 @@ function openAddSubItem(accId) {
   document.getElementById('sub-fixed-section').style.display = '';
   document.getElementById('modal-subitem-title').textContent = '新增子項目';
   document.getElementById('modal-add-subitem').dataset.accId = accId;
+  renderSubRefs(accId, null);
   openModal('modal-add-subitem');
+}
+
+function renderSubRefs(accId, editId) {
+  const acc = state.accounts.find(a => a.id === accId);
+  const otherSubs = (acc ? acc.subitems||[] : []).filter(s => s.id !== editId);
+  const el = document.getElementById('sub-refs-list');
+  if (!el) return;
+  el.innerHTML = currentSubRefs.map((ref, i) => {
+    const options = otherSubs.map(s => `<option value="${s.id}" ${s.id===ref.subId?'selected':''}>${s.name}</option>`).join('');
+    return `<div class="ref-row">
+      <select class="ref-sign-select" onchange="currentSubRefs[${i}].sign=Number(this.value)">
+        <option value="1" ${Number(ref.sign)===1?'selected':''}>＋加入</option>
+        <option value="-1" ${Number(ref.sign)===-1?'selected':''}>－扣除</option>
+      </select>
+      <select onchange="currentSubRefs[${i}].subId=this.value">${options}</select>
+      <button class="btn sm danger" style="padding:2px 8px;flex-shrink:0;" onclick="removeSubRef(${i})">✕</button>
+    </div>`;
+  }).join('') || '<div class="text-sm" style="color:var(--text3);">尚未引用任何子項目</div>';
+}
+
+function addSubRef() {
+  const accId = document.getElementById('modal-add-subitem').dataset.accId;
+  const editId = document.getElementById('subitem-edit-id').value;
+  const acc = state.accounts.find(a => a.id === accId);
+  const otherSubs = (acc ? acc.subitems||[] : []).filter(s => s.id !== editId);
+  if (!otherSubs.length) { alert('沒有其他子項目可以引用'); return; }
+  currentSubRefs.push({ subId: otherSubs[0].id, sign: 1 });
+  renderSubRefs(accId, editId);
+}
+
+function removeSubRef(idx) {
+  currentSubRefs.splice(idx, 1);
+  const accId = document.getElementById('modal-add-subitem').dataset.accId;
+  const editId = document.getElementById('subitem-edit-id').value;
+  renderSubRefs(accId, editId);
 }
 
 function editSubItem(accId, subId) {
   const acc = state.accounts.find(a => a.id === accId);
   const sub = (acc.subitems||[]).find(s => s.id === subId);
   if (!sub) return;
+  currentSubRefs = JSON.parse(JSON.stringify(sub.refs||[]));
   document.getElementById('subitem-edit-id').value = subId;
   document.getElementById('sub-name').value = sub.name;
   document.getElementById('sub-type').value = sub.type;
@@ -966,6 +1027,7 @@ function editSubItem(accId, subId) {
   document.getElementById('sub-fixed-section').style.display = '';
   document.getElementById('modal-subitem-title').textContent = '編輯子項目';
   document.getElementById('modal-add-subitem').dataset.accId = accId;
+  renderSubRefs(accId, subId);
   openModal('modal-add-subitem');
 }
 
@@ -984,13 +1046,14 @@ function saveSubItem() {
   const amount = document.getElementById('sub-amount').value;
   const sign = document.getElementById('sub-sign').value;
   const note = document.getElementById('sub-note').value.trim();
+  const refs = currentSubRefs.filter(r => r.subId);
   if (!name) return;
   if (!acc.subitems) acc.subitems = [];
   if (editId) {
     const sub = acc.subitems.find(s => s.id === editId);
-    if (sub) { sub.name = name; sub.type = type; sub.note = note; sub.sign = sign; if (type === 'fixed') sub.amount = amount; }
+    if (sub) { sub.name = name; sub.type = type; sub.note = note; sub.sign = sign; sub.refs = refs; if (type === 'fixed') sub.amount = amount; }
   } else {
-    acc.subitems.push({ id: uid(), name, type, amount: type === 'fixed' ? amount : 0, sign, note, entries: [], calcChecked: true });
+    acc.subitems.push({ id: uid(), name, type, amount: type === 'fixed' ? amount : 0, sign, note, refs, entries: [], calcChecked: true });
   }
   persist();
   closeModal('modal-add-subitem');
