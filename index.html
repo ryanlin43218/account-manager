@@ -29,7 +29,7 @@
   --radius-sm: 8px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.65; min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
 /* Layout */
 .app { display: flex; min-height: 100vh; }
@@ -42,7 +42,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 .sidebar-sub { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: var(--mono); letter-spacing: 0.5px; text-transform: uppercase; }
 .nav { padding: 12px 0; flex: 1; }
 .nav-section { padding: 16px 20px 4px; font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; margin: 1px 8px; font-size: 14px; color: var(--text2); cursor: pointer; transition: all 0.12s; border-left: none; border-radius: 8px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; margin: 1px 8px; font-size: 15px; color: var(--text2); cursor: pointer; transition: all 0.12s; border-left: none; border-radius: 8px; }
 .nav-item:hover { background: var(--surface2); color: var(--text); }
 .nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; border-left: none; }
 .nav-icon { width: 15px; height: 15px; opacity: 0.55; flex-shrink: 0; }
@@ -59,14 +59,14 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 /* Cards */
 .card { background: var(--surface); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); }
 .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-.card-title { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
-.card-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.card-title { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; }
+.card-sub { font-size: 13px; color: var(--text3); margin-top: 2px; }
 
 /* Metric grid */
-.metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
 .metric { background: var(--surface); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius); padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); }
-.metric-label { font-size: 11px; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; font-weight: 500; }
-.metric-value { font-size: 22px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.5px; }
+.metric-label { font-size: 12px; color: var(--text3); letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 8px; font-weight: 500; }
+.metric-value { font-size: 24px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.5px; }
 .metric-value.green { color: var(--accent); }
 .metric-value.red { color: var(--danger); }
 .metric-value.amber { color: var(--amber); }
@@ -82,21 +82,21 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 
 /* Tags & Badges */
 .tag { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--surface2); color: var(--text3); border: none; font-family: var(--mono); letter-spacing: 0.3px; }
-.badge { font-size: 12px; padding: 4px 12px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border); color: var(--text2); background: var(--surface); transition: all 0.12s; white-space: nowrap; font-weight: 400; }
+.badge { font-size: 13px; padding: 4px 12px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border); color: var(--text2); background: var(--surface); transition: all 0.12s; white-space: nowrap; font-weight: 400; }
 .badge:hover { background: var(--surface2); }
 .badge.primary { background: var(--accent); color: white; border-color: var(--accent); }
 .badge.danger { background: var(--danger-light); color: var(--danger); border-color: #f5c6c2; }
 
 /* Tabs */
 .tab-bar { display: flex; gap: 4px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 2px; background: var(--surface2); border-radius: 10px; padding: 4px; }
-.tab { padding: 7px 16px; font-size: 13px; border-radius: 7px; cursor: pointer; color: var(--text2); border: none; white-space: nowrap; transition: all 0.12s; }
+.tab { padding: 8px 18px; font-size: 14px; border-radius: 7px; cursor: pointer; color: var(--text2); border: none; white-space: nowrap; transition: all 0.12s; }
 .tab:hover { background: var(--surface2); }
 .tab.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
 .tab.add { color: var(--text3); }
 .tab.add:hover { color: var(--accent); border-color: var(--accent); }
 
 /* Buttons */
-.btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; font-family: var(--sans); transition: all 0.12s; font-weight: 400; }
+.btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; cursor: pointer; font-family: var(--sans); transition: all 0.12s; font-weight: 400; }
 .btn:hover { background: var(--surface2); }
 .btn.primary { background: var(--accent); color: white; border-color: var(--accent); font-weight: 500; }
 .btn.primary:hover { opacity: 0.85; }
@@ -106,7 +106,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 /* Inputs */
 input[type=text], input[type=number], input[type=date], textarea, select {
   background: var(--surface2); border: 1px solid transparent; border-radius: 8px;
-  padding: 10px 12px; font-size: 14px; font-family: var(--sans); color: var(--text);
+  padding: 10px 12px; font-size: 15px; font-family: var(--sans); color: var(--text);
   width: 100%; outline: none; transition: all 0.12s;
 }
 input[type=text]:focus, input[type=number]:focus, input[type=date]:focus, textarea:focus, select:focus {
@@ -117,7 +117,7 @@ textarea { resize: vertical; min-height: 60px; }
 
 /* Form */
 .form-row { margin-bottom: 12px; }
-.form-label { font-size: 12px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
+.form-label { font-size: 13px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 
@@ -130,16 +130,16 @@ textarea { resize: vertical; min-height: 60px; }
 /* CC grid */
 .cc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .cc-period-title { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-.cc-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--border); gap: 8px; }
+.cc-item { display: flex; justify-content: space-between; align-items: center; font-size: 14px; padding: 7px 0; border-bottom: 1px solid var(--border); gap: 8px; }
 .cc-item:last-child { border-bottom: none; }
-.cc-total { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border2); font-family: var(--mono); }
+.cc-total { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border2); font-family: var(--mono); }
 
 /* Todo */
 .todo-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .todo-item:last-child { border-bottom: none; }
 .todo-check-wrap { padding-top: 2px; }
 .todo-content { flex: 1; }
-.todo-name { font-size: 14px; font-weight: 500; }
+.todo-name { font-size: 15px; font-weight: 500; }
 .todo-name.done { text-decoration: line-through; color: var(--text3); }
 .todo-note { font-size: 12px; color: var(--text3); margin-top: 2px; }
 .todo-right { display: flex; align-items: center; gap: 10px; }
@@ -160,7 +160,7 @@ textarea { resize: vertical; min-height: 60px; }
 /* Snapshot */
 .snapshot-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .snapshot-item:last-child { border-bottom: none; }
-.snapshot-date { font-size: 13px; font-weight: 500; font-family: var(--mono); }
+.snapshot-date { font-size: 14px; font-weight: 500; font-family: var(--mono); }
 .snapshot-note { font-size: 12px; color: var(--text3); margin-top: 2px; }
 .snapshot-actions { display: flex; gap: 8px; }
 
@@ -206,7 +206,7 @@ textarea { resize: vertical; min-height: 60px; }
 @media (max-width: 700px) { .account-layout { grid-template-columns: 1fr; } }
 
 /* Compact rows */
-.row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; gap: 8px; }
+.row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; gap: 8px; }
 .row:last-child { border-bottom: none; padding-bottom: 0; }
 
 /* Drag handle */
@@ -220,8 +220,8 @@ textarea { resize: vertical; min-height: 60px; }
 /* Subitem content */
 .subitem-main { flex: 1; min-width: 0; }
 .subitem-header { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.subitem-name { font-size: 13px; font-weight: 500; }
-.subitem-amount { font-family: var(--mono); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.subitem-name { font-size: 14px; font-weight: 500; }
+.subitem-amount { font-family: var(--mono); font-size: 14px; font-weight: 500; white-space: nowrap; }
 .subitem-amount.pos { color: var(--accent); }
 .subitem-amount.neg { color: var(--danger); }
 .subitem-amount.neutral { color: var(--text3); }
@@ -229,7 +229,7 @@ textarea { resize: vertical; min-height: 60px; }
 
 /* Accumulate entries - compact */
 .accu-entries { margin-top: 4px; }
-.accu-entry { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 6px; border-radius: 5px; background: var(--surface2); margin-bottom: 3px; }
+.accu-entry { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 6px; border-radius: 5px; background: var(--surface2); margin-bottom: 3px; }
 .accu-entry-date { color: var(--text3); font-family: var(--mono); white-space: nowrap; flex-shrink: 0; }
 .accu-entry-name { flex: 1; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .accu-entry-note { color: var(--text3); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
@@ -239,31 +239,43 @@ textarea { resize: vertical; min-height: 60px; }
 
 /* Calc panel (right column) */
 .calc-panel { background: var(--surface); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); position: sticky; top: 20px; }
-.calc-panel-title { font-size: 12px; font-weight: 600; color: var(--text3); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 10px; }
-.calc-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
+.calc-panel-title { font-size: 13px; font-weight: 600; color: var(--text3); letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 10px; }
+.calc-row { display: flex; align-items: center; gap: 6px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
 .calc-row:last-of-type { border-bottom: none; }
 .calc-row input[type=checkbox] { flex-shrink: 0; }
 .calc-row-name { flex: 1; color: var(--text2); }
-.calc-row-amount { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+.calc-row-amount { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
 .calc-row-amount.pos { color: var(--accent); }
 .calc-row-amount.neg { color: var(--danger); }
 .calc-divider { height: 1px; background: var(--border2); margin: 8px 0; }
 .calc-balance { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); padding: 2px 0; }
 .calc-result-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; }
-.calc-result-label { font-size: 13px; font-weight: 600; }
-.calc-result-val { font-family: var(--mono); font-size: 20px; font-weight: 700; }
+.calc-result-label { font-size: 14px; font-weight: 600; }
+.calc-result-val { font-family: var(--mono); font-size: 22px; font-weight: 700; }
 .view-toggle { padding: 5px 12px; font-size: 12px; border-radius: 6px; border: none; background: transparent; color: var(--text2); cursor: pointer; font-family: var(--sans); transition: all 0.12s; }
 .view-toggle.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-.overview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
-.overview-card { background: var(--surface); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius); padding: 16px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.overview-card-title { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
-.overview-card-balance { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 10px; }
+.overview-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+@media (max-width: 900px) { .overview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.overview-card { background: var(--surface); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius); padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); word-break: break-word; }
+.overview-card-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; line-height: 1.4; }
+.overview-card-balance { font-family: var(--mono); font-size: 19px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
 .overview-card-avail { font-size: 12px; color: var(--text3); display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid var(--border); margin-top: 8px; }
 .overview-card-avail span:last-child { font-family: var(--mono); font-weight: 600; }
 /* Draggable tabs */
 .tab[draggable] { cursor: grab; }
 .tab[draggable]:active { cursor: grabbing; }
 .tab.tab-drag-over { border: 1px dashed var(--accent); }
+.list-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.list-table thead tr { border-bottom: 1px solid var(--border2); }
+.list-table th { text-align: left; font-size: 12px; font-weight: 600; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; padding: 14px 16px 12px; }
+.list-table th:last-child { text-align: right; }
+.list-table td { padding: 13px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); }
+.list-table tr:last-child td { border-bottom: none; }
+.list-table tbody tr { cursor: pointer; transition: background 0.1s; }
+.list-table tbody tr:hover td { background: var(--surface2); }
+.list-table td:last-child { text-align: right; font-family: var(--mono); font-weight: 600; }
+.list-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
 .ref-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; background: var(--surface2); border-radius: 7px; padding: 6px 8px; }
 .ref-row select { flex: 1; font-size: 12px; padding: 4px 8px; }
 .ref-row .ref-sign-select { width: 90px; font-size: 12px; padding: 4px 8px; }
@@ -320,7 +332,7 @@ textarea { resize: vertical; min-height: 60px; }
       <div class="page-title">總覽</div>
       <div class="metric-grid" id="overview-metrics"></div>
       <div class="card">
-        <div class="card-header"><div class="card-title">帳戶餘額</div></div>
+        <div class="card-header"><div class="card-title">帳戶明細</div></div>
         <div id="overview-accounts"></div>
       </div>
       <div class="card">
@@ -341,6 +353,7 @@ textarea { resize: vertical; min-height: 60px; }
           <div style="display:flex;background:var(--surface2);border-radius:8px;padding:3px;gap:2px;">
             <button id="acc-view-tab" class="view-toggle active" onclick="setAccountView('tab')">Tab</button>
             <button id="acc-view-all" class="view-toggle" onclick="setAccountView('all')">總覽</button>
+            <button id="acc-view-list" class="view-toggle" onclick="setAccountView('list')">列表</button>
           </div>
           <button class="btn primary" onclick="openAddAccountModal()">＋ 新增帳戶</button>
         </div>
@@ -357,6 +370,7 @@ textarea { resize: vertical; min-height: 60px; }
           <div style="display:flex;background:var(--surface2);border-radius:8px;padding:3px;gap:2px;">
             <button id="card-view-tab" class="view-toggle active" onclick="setCardView('tab')">Tab</button>
             <button id="card-view-all" class="view-toggle" onclick="setCardView('all')">總覽</button>
+            <button id="card-view-list" class="view-toggle" onclick="setCardView('list')">列表</button>
           </div>
           <button class="btn primary" onclick="openAddCardModal()">＋ 新增信用卡</button>
         </div>
@@ -369,7 +383,7 @@ textarea { resize: vertical; min-height: 60px; }
     <div class="page" id="page-expected">
       <div class="page-title flex-between">
         預期支出
-        <button class="btn primary" onclick="openModal('modal-add-expected')">＋ 新增項目</button>
+        <button class="btn primary" onclick="openAddExpected()">＋ 新增項目</button>
       </div>
       <div class="card" id="expected-list"></div>
     </div>
@@ -426,6 +440,10 @@ textarea { resize: vertical; min-height: 60px; }
         <option value="1">加入（這筆錢可以用）</option>
         <option value="0">不計算</option>
       </select>
+    </div>
+    <div class="form-row" style="display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="sub-overview-include">
+      <label for="sub-overview-include" style="font-size:13px;cursor:pointer;">計入總覽「帳戶總餘額」</label>
     </div>
     <div id="sub-fixed-section" class="form-row"><div class="form-label">金額（累計型請填 0，由記錄加總）</div><input type="number" id="sub-amount" placeholder="0"></div>
     <div class="form-row"><div class="form-label">備註</div><textarea id="sub-note" placeholder="可選"></textarea></div>
@@ -515,6 +533,24 @@ textarea { resize: vertical; min-height: 60px; }
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-edit-cc-dates')">取消</button>
       <button class="btn primary" onclick="saveCCDates()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Drive conflict -->
+<div class="modal-overlay" id="modal-drive-conflict">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">選擇資料來源</div>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.6;">本機與 Google Drive 都有資料，請選擇要使用哪份：</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button class="btn primary" style="padding:12px;height:auto;line-height:1.5;text-align:left;" onclick="resolveConflict('local')">
+        <div style="font-weight:600;margin-bottom:4px;">使用本機資料</div>
+        <div style="font-size:11px;opacity:0.8;">並上傳覆蓋 Drive</div>
+      </button>
+      <button class="btn" style="padding:12px;height:auto;line-height:1.5;text-align:left;" onclick="resolveConflict('drive')">
+        <div style="font-weight:600;margin-bottom:4px;">使用 Drive 資料</div>
+        <div style="font-size:11px;color:var(--text3);">本機資料會被取代</div>
+      </button>
     </div>
   </div>
 </div>
@@ -661,16 +697,9 @@ async function loadFromDrive() {
     const localHasData = localData && localData.accounts && localData.accounts.length > 0;
 
     if (localHasData && driveHasData) {
-      // Both have data - ask user which to use
-      const useLocal = confirm('本機與 Google Drive 都有資料。\n\n按「確定」→ 使用本機資料（並上傳到 Drive 覆蓋）\n按「取消」→ 使用 Drive 資料（本機資料會被取代）');
-      if (useLocal) {
-        // Keep local, push to drive
-        state = localData;
-        updateDriveStatus('connected');
-        renderAll();
-        await saveToDrive();
-        return;
-      }
+      // Both have data - show custom modal
+      showDriveConflictModal(localData, driveData);
+      return;
     } else if (localHasData && !driveHasData) {
       // Only local has data - upload to drive automatically
       state = localData;
@@ -706,6 +735,32 @@ async function saveToDrive() {
     saveLocal();
     showSaveIndicator('☁️ 已同步');
   } catch(e) { saveLocal(); showSaveIndicator('⚠️ Drive 同步失敗，已存本機'); }
+}
+
+let _conflictLocalData = null;
+let _conflictDriveData = null;
+
+function showDriveConflictModal(localData, driveData) {
+  _conflictLocalData = localData;
+  _conflictDriveData = driveData;
+  openModal('modal-drive-conflict');
+}
+
+async function resolveConflict(choice) {
+  closeModal('modal-drive-conflict');
+  if (choice === 'local') {
+    state = _conflictLocalData;
+    updateDriveStatus('connected');
+    renderAll();
+    await saveToDrive();
+  } else {
+    state = _conflictDriveData;
+    saveLocal();
+    updateDriveStatus('connected');
+    renderAll();
+  }
+  _conflictLocalData = null;
+  _conflictDriveData = null;
 }
 
 function showSaveIndicator(msg) {
@@ -762,6 +817,13 @@ function persistWithUndo() {
   persist();
 }
 
+function toggleAccAvail(accId, checked) {
+  const acc = state.accounts.find(a => a.id === accId);
+  if (acc) acc.includeInAvail = checked;
+  persist();
+  renderOverview();
+}
+
 // ─── Navigation ───────────────────────────────────────────────────
 function switchPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -787,24 +849,55 @@ document.addEventListener('keydown', e => {
 });
 
 // ─── Overview ─────────────────────────────────────────────────────
+function getAccountSubTotal(acc) {
+  // Sum of subitems that have overviewInclude === true
+  return (acc.subitems||[])
+    .filter(s => s.overviewInclude === true)
+    .reduce((sum, s) => sum + Math.abs(getSubVal(s, acc.subitems)), 0);
+}
+
 function renderOverview() {
-  const totalBalance = state.accounts.reduce((s, a) => s + Number(a.balance||0), 0);
+  // 帳戶總餘額 = sum of subitems marked overviewInclude across all accounts
+  const totalSubBalance = state.accounts.reduce((s, a) => s + getAccountSubTotal(a), 0);
+  // 可用餘額 = sum of calcAvailable for accounts with includeInAvail !== false
+  const totalAvail = state.accounts
+    .filter(a => a.includeInAvail !== false)
+    .reduce((s, a) => s + calcAvailable(a), 0);
   const totalCC = state.cards.reduce((s, c) => s + getCCTotal(c, 'current'), 0);
   const totalExp = state.expected.filter(e => !e.done).reduce((s, e) => s + Number(e.amount||0), 0);
 
   document.getElementById('overview-metrics').innerHTML = `
-    <div class="metric"><div class="metric-label">帳戶總餘額</div><div class="metric-value green">$${fmt(totalBalance)}</div></div>
+    <div class="metric"><div class="metric-label">帳戶總餘額</div><div class="metric-value" style="color:var(--text);">$${fmt(totalSubBalance)}</div></div>
+    <div class="metric"><div class="metric-label">可用餘額</div><div class="metric-value green">$${fmt(totalAvail)}</div></div>
     <div class="metric"><div class="metric-label">信用卡本期合計</div><div class="metric-value red">$${fmt(totalCC)}</div></div>
     <div class="metric"><div class="metric-label">預期支出合計</div><div class="metric-value amber">$${fmt(totalExp)}</div></div>
   `;
 
   const accEl = document.getElementById('overview-accounts');
   if (!state.accounts.length) { accEl.innerHTML = '<div class="empty">尚無帳戶</div>'; }
-  else accEl.innerHTML = state.accounts.map(a => `
-    <div class="row">
-      <span class="row-label">${a.bank} — ${a.name}</span>
-      <span class="row-value mono">$${fmt(a.balance)}</span>
-    </div>`).join('');
+  else accEl.innerHTML = state.accounts.map(a => {
+    const avail = calcAvailable(a);
+    const subTotal = getAccountSubTotal(a);
+    const inclAvail = a.includeInAvail !== false;
+    return `<div class="row" style="align-items:flex-start;padding:10px 0;">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+          <span style="font-size:13px;font-weight:500;">${a.bank} — ${a.name}</span>
+          <span class="tag">餘額 $${fmt(a.balance)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:10px;">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+            <input type="checkbox" ${inclAvail?'checked':''} onchange="toggleAccAvail('${a.id}',this.checked)">
+            計入可用餘額
+          </label>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        ${subTotal>0?`<div style="font-size:11px;color:var(--text3);margin-bottom:2px;">總餘額貢獻 $${fmt(subTotal)}</div>`:''}
+        <div class="mono" style="font-size:13px;font-weight:600;color:${avail<0?'var(--danger)':'var(--accent)'};">可用 $${fmt(avail)}</div>
+      </div>
+    </div>`;
+  }).join('');
 
   const ccEl = document.getElementById('overview-cards');
   if (!state.cards.length) { ccEl.innerHTML = '<div class="empty">尚無信用卡</div>'; }
@@ -942,6 +1035,7 @@ function renderAccounts() {
             <span class="tag">${s.type === 'fixed' ? '固定' : '累計'}</span>
             ${getSignLabel(s.sign||'-1')}
             ${(s.refs&&s.refs.length) ? `<span class="tag" style="color:var(--accent);">引用 ${s.refs.length} 項</span>` : ''}
+            ${s.overviewInclude ? `<span class="tag" style="color:var(--amber);">計入總覽</span>` : ''}
             ${s.note ? `<span class="text-sm">${s.note}</span>` : ''}
           </div>
           ${entriesHtml}
@@ -1023,6 +1117,35 @@ function renderAccounts() {
         <div class="overview-card-avail"><span>可用金額</span><span style="color:${avail2<0?'var(--danger)':'var(--accent)'};">$${fmt(avail2)}</span></div>
       </div>`;
     }).join('')}</div>`;
+    return;
+  }
+
+  // List mode
+  if (accViewMode2 === 'list') {
+    tabsEl.style.display = 'none';
+    contentEl.innerHTML = `<div class="card" style="padding:0;">
+      <table class="list-table">
+        <thead><tr>
+          <th>帳戶名稱</th>
+          <th>銀行</th>
+          <th>子項目</th>
+          <th>帳戶餘額</th>
+          <th>可用金額</th>
+        </tr></thead>
+        <tbody>${state.accounts.map((a, i) => {
+          const avail = calcAvailable(a);
+          const subCount = (a.subitems||[]).length;
+          const ccCount = state.cards.filter(c => c.accountId === a.id).length;
+          return `<tr onclick="setAccountView('tab');switchAccount(${i})">
+            <td><span style="font-weight:500;">${a.name}</span></td>
+            <td style="color:var(--text2);">${a.bank}</td>
+            <td style="color:var(--text3);">${subCount} 項${ccCount>0?` · ${ccCount} 張卡`:''}</td>
+            <td style="font-family:var(--mono);">$${fmt(a.balance)}</td>
+            <td style="font-family:var(--mono);font-weight:600;color:${avail<0?'var(--danger)':'var(--accent)'};">$${fmt(avail)}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
     return;
   }
 
@@ -1124,6 +1247,7 @@ function openAddSubItem(accId) {
   document.getElementById('sub-type').value = 'fixed';
   document.getElementById('sub-amount').value = '';
   document.getElementById('sub-sign').value = '-1';
+  document.getElementById('sub-overview-include').checked = false;
   document.getElementById('sub-note').value = '';
   document.getElementById('sub-fixed-section').style.display = '';
   document.getElementById('modal-subitem-title').textContent = '新增子項目';
@@ -1177,6 +1301,7 @@ function editSubItem(accId, subId) {
   document.getElementById('sub-type').value = sub.type;
   document.getElementById('sub-amount').value = sub.amount || '';
   document.getElementById('sub-sign').value = sub.sign || '-1';
+  document.getElementById('sub-overview-include').checked = sub.overviewInclude === true;
   document.getElementById('sub-note').value = sub.note || '';
   document.getElementById('sub-fixed-section').style.display = '';
   document.getElementById('modal-subitem-title').textContent = '編輯子項目';
@@ -1202,13 +1327,14 @@ function saveSubItem() {
   const sign = document.getElementById('sub-sign').value;
   const note = document.getElementById('sub-note').value.trim();
   const refs = currentSubRefs.filter(r => r.subId);
+  const overviewInclude = document.getElementById('sub-overview-include').checked;
   if (!name) return;
   if (!acc.subitems) acc.subitems = [];
   if (editId) {
     const sub = acc.subitems.find(s => s.id === editId);
-    if (sub) { sub.name = name; sub.type = type; sub.note = note; sub.sign = sign; sub.refs = refs; if (type === 'fixed') sub.amount = amount; }
+    if (sub) { sub.name = name; sub.type = type; sub.note = note; sub.sign = sign; sub.refs = refs; sub.overviewInclude = overviewInclude; if (type === 'fixed') sub.amount = amount; }
   } else {
-    acc.subitems.push({ id: uid(), name, type, amount: type === 'fixed' ? amount : 0, sign, note, refs, entries: [], calcChecked: true });
+    acc.subitems.push({ id: uid(), name, type, amount: type === 'fixed' ? amount : 0, sign, note, refs, overviewInclude, entries: [], calcChecked: true });
   }
   persist();
   closeModal('modal-add-subitem');
@@ -1443,12 +1569,14 @@ function setAccountView(mode) {
   window._accViewMode = mode;
   document.getElementById('acc-view-tab').classList.toggle('active', mode==='tab');
   document.getElementById('acc-view-all').classList.toggle('active', mode==='all');
+  document.getElementById('acc-view-list').classList.toggle('active', mode==='list');
   renderAccounts();
 }
 function setCardView(mode) {
   window._cardViewMode = mode;
   document.getElementById('card-view-tab').classList.toggle('active', mode==='tab');
   document.getElementById('card-view-all').classList.toggle('active', mode==='all');
+  document.getElementById('card-view-list').classList.toggle('active', mode==='list');
   renderCards();
 }
 
@@ -1619,8 +1747,7 @@ function openAddCardModal() {
 document.addEventListener('DOMContentLoaded', () => {});
 
 // Override the + button for card
-document.querySelector('[onclick="openModal(\'modal-add-card\')"]').setAttribute('onclick', 'openAddCardModal()');
-document.querySelector('[onclick="openModal(\'modal-add-account\')"]').setAttribute('onclick', 'openAddAccountModal()');
+// openAddCardModal and openAddAccountModal are already set in HTML directly
 
 // ─── Expected ─────────────────────────────────────────────────────
 function renderExpected() {
@@ -1693,7 +1820,7 @@ function deleteExpected(id) {
 }
 
 // Open add expected with cleared state
-document.querySelector('[onclick="openModal(\'modal-add-expected\')"]').setAttribute('onclick', `openAddExpected()`);
+// openAddExpected is called directly
 function openAddExpected() {
   document.getElementById('exp-edit-id').value = '';
   document.getElementById('exp-name').value = '';
